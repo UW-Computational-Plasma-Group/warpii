@@ -6,16 +6,15 @@
 #include <memory>
 
 #include "../wrapper.h"
+#include "../common_params.h"
 
 namespace warpii {
 namespace five_moment {
 
 void FiveMomentWrapper::declare_parameters(ParameterHandler &prm) {
-    prm.declare_entry("n_dims", "1", Patterns::Integer(1, 3), 
-R"(The number of dimensions in the problem.
-    )");
+    declare_n_dims(prm);
+    declare_n_boundaries(prm);
     prm.declare_entry("n_species", "1", Patterns::Integer());
-    prm.declare_entry("n_boundaries", "0", Patterns::Integer());
     GridWrapper::declare_parameters(prm);
 }
 

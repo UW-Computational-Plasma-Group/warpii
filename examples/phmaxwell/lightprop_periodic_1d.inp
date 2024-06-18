@@ -1,0 +1,29 @@
+set Application = PerfectlyHyperbolicMaxwell
+set n_dims = 1
+set t_end = 1.0
+set write_output = true
+
+set fe_degree = 2
+
+subsection geometry
+    set left = 0.0
+    set right = 1.0
+    set nx = 100
+end
+
+subsection Normalization
+    set omega_c_tau = 2.0
+end
+
+subsection PHMaxwellFields
+    subsection InitialCondition
+        subsection E field
+            set Function constants = pi=3.1415926535
+            set Function expression = 0.0; sin(2*pi*x); 0.0
+        end
+        subsection B field
+            set Function constants = pi=3.1415926535
+            set Function expression = 0.0; 0.0; 2*sin(2*pi*x)
+        end
+    end
+end

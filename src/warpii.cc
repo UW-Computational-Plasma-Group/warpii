@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "five_moment/five_moment.h"
+#include "maxwell/maxwell_app.h"
 #include "fpe.h"
 #include "grid.h"
 #include "opts.h"
@@ -146,7 +147,7 @@ Format specifier:
           by the string "STDIN"
     )");
     prm.declare_entry("Application", "FiveMoment",
-                      Patterns::Selection("FiveMoment|FPETest"));
+                      Patterns::Selection("FiveMoment|PerfectlyHyperbolicMaxwell|FPETest"));
     prm.parse_input_from_string(input, "", true);
 
     create_and_move_to_subdir(format_workdir(prm, opts));
@@ -161,6 +162,8 @@ Format specifier:
     }
     if (prm.get("Application") == "FiveMoment") {
         app_wrapper = std::make_unique<five_moment::FiveMomentWrapper>();
+    } else if (prm.get("Application") == "PerfectlyHyperbolicMaxwell") {
+        app_wrapper = std::make_unique<maxwell::PHMaxwellWrapper>();
     }
     app_wrapper->declare_parameters(prm);
     auto new_ptr = app_wrapper->create_app(prm, input, extension);
