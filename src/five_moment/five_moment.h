@@ -19,6 +19,7 @@
 #include "species.h"
 #include "extension.h"
 #include "dg_solution_helper.h"
+#include "../common_params.h"
 
 using namespace dealii;
 
@@ -102,6 +103,8 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
     unsigned int n_species = prm.get_integer("n_species");
     unsigned int n_boundaries = prm.get_integer("n_boundaries");
 
+    PlasmaNormalization::declare_parameters(prm);
+
     std::vector<Species<dim>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
@@ -110,16 +113,11 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
         Species<dim>::declare_parameters(prm, n_boundaries);
         prm.leave_subsection();
     }
+    PHMaxwellFields<dim>::declare_parameters(prm, n_boundaries);
 
     Grid<dim>::declare_parameters(prm, ext);
 
-    prm.declare_entry("fe_degree", "2", Patterns::Integer(1, 6),
-            R"(
-The degree of finite element shape functions to use.
-The expected order of convergence is one greater than this.
-I.e. if fe_degree == 2, then we use quadratic polynomials and
-can expect third order convergence.
-            )");
+    declare_fe_degree(prm);
     prm.declare_entry("fields_enabled", "auto", Patterns::Selection("true|false|auto"),
             R"(
 Whether electromagnetic fields are enabled for this problem.
@@ -141,9 +139,9 @@ as used in the perfectly hyperbolic Maxwell's equation system.
 The gas gamma, AKA the ratio of specific heats, AKA (n_dims+2)/2 for a plasma.
 Defaults to 5/3, the value for simple ions with 3 degrees of freedom.
             )");
-    prm.declare_entry("t_end", "0.0", Patterns::Double(0.0));
-    prm.declare_entry("write_output", "true", Patterns::Bool());
-    prm.declare_entry("n_writeout_frames", "10", Patterns::Integer(0));
+    declare_t_end(prm);
+    declare_write_output(prm);
+    declare_n_writeout_frames(prm);
 }
 
 template <int dim>
@@ -155,6 +153,8 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
 
     double gas_gamma = prm.get_double("gas_gamma");
 
+    PlasmaNormalization plasma_norm = PlasmaNormalization::create_from_parameters(prm);
+
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
@@ -164,6 +164,8 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
             Species<dim>::create_from_parameters(prm, n_boundaries, gas_gamma));
         prm.leave_subsection();
     }
+    auto fields = PHMaxwellFields<dim>::create_from_parameters(
+            prm, n_boundaries, plasma_norm);
 
     auto grid = Grid<dim>::create_from_parameters(prm, 
             std::static_pointer_cast<GridExtension<dim>>(ext));
@@ -178,13 +180,11 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     bool write_output = prm.get_bool("write_output");
     unsigned int n_writeout_frames = prm.get_integer("n_writeout_frames");
 
-    unsigned int n_nonmesh_unknowns = n_boundaries;
-
     auto discretization = std::make_shared<NodalDGDiscretization<dim>>(
         grid, n_components, fe_degree);
 
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
-        discretization, species, gas_gamma, t_end, n_nonmesh_unknowns);
+        discretization, species, fields, gas_gamma, t_end, n_boundaries, fields_enabled);
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,
                                                     grid, std::move(dg_solver),
@@ -310,7 +310,7 @@ void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
     discretization->build_data_out_patches(data_out);
 
     const std::string filename =
-        "solution_" + Utilities::int_to_string(result_number, 3) + ".vtu";
+        "solution_" + Utilities::int_to_string(result_number) + ".vtu";
     data_out.write_vtu_in_parallel(filename, MPI_COMM_WORLD);
 }
 
