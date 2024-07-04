@@ -1,9 +1,19 @@
 <doxygenlayout version="1.0">
 <navindex>
-    <tab type="mainpage" visible="yes" title="About"/>
-    <tab type="user" url="@ref install" title="Installation instructions"/>
-    <tab type="user" url="@ref first_simulation" title="Running a simple simulation"/>
-    <tab type="user" url="@ref extension_tutorial" title="Extending WarpII with C++"/>
+    <tab type="mainpage" visible="yes" url="@ref mainpage" title="About"/>
+    <tab type="usergroup" visible="yes" url="@ref getting_started" title="Getting started">
+        <tab type="user" visible="yes" url="@ref first_steps" title="First steps with WarpII"/>
+        <tab type="user" visible="yes" url="@ref extension_tutorial" title="Extending WarpII with C++"/>
+    </tab>
+    <tab type="usergroup" visible="yes" url="@ref howto" title="How-to guides">
+    </tab>
+    <tab type="usergroup" visible="yes" url="@ref reference" title="Reference">
+    </tab>
+    <tab type="usergroup" visible="yes" title="Explanation">
+        <tab type="user" visible="yes" url="@ref esdgsem" title="The entropy-stable Discontinuous Galerkin spectral element method"/>
+    </tab>
+    
+
 
     <tab type="usergroup" title="The Code" url="">
       <!-- <tab type="pages" visible="no" title="" intro=""/> -->

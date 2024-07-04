@@ -14,14 +14,13 @@ In this example we create a simple extension, compile, and run it.
 
 - First, create a directory to hold the extension:
 ```
-> mkdir -p my_extension 
-> cd my_extension
+$ mkdir -p my_extension 
+$ cd my_extension
 ```
 - Now create a file `main.cc` in `my_extension` with the following contents:
-
-`my_extension/main.cc`:
-[//]: <> (This is also a comment.)
 ```cpp
+# my_extension/main.cc
+
 #include "src/five_moment/extension.h"
 #include "src/warpii.h"
 #include <deal.II/base/mpi.h>
@@ -37,12 +36,12 @@ int main(int argc, char** argv) {
 ```
 - Copy the Makefile located in the WarpII build directory to your extension directory:
 ```
-> cp $WARPII_REPO/builds/$WARPII_CMAKE_PRESET/extensions/Makefile.example Makefile
+$ cp $WARPII_REPO/builds/$WARPII_CMAKE_PRESET/extensions/Makefile.example Makefile
 ```
 - Compile and run the extension:
 ```
-> make
-> ./main
+$ make
+$ ./main
 ```
 This should print out the WarpII usage string, since we haven't given it an input file!
 
@@ -116,7 +115,7 @@ there.
 
 Let's recompile the file:
 ```
-> make
+$ make
 ```
 
 We now need to supply an input file to the simulation.
@@ -156,7 +155,8 @@ end
 
 Notice that we had to specify the total number of boundaries in the domain,
 including periodic boundaries, and tell WarpII to use a reflecting wall boundary
-condition for boundary id 4, which is the circular hole wall.
+condition for boundary id 4, which is the circular hole wall according to the documentation
+of the [plate_with_a_hole](https://www.dealii.org/developer/doxygen/deal.II/namespaceGridGenerator.html#a1cef2def7a0b1ce88eef4ec630b1e3b8) function.
 We specify 3rd-degree polynomials with the `fe_degree` option,
 and ask for 3 levels of global refinement, which means that the original mesh is
 refined by a factor of 8 in each direction.
@@ -166,7 +166,7 @@ The resulting refined mesh looks like this:
 
 To run the simulation, simply pass the input file to your `main` executable on the command line:
 ```
-> ./main plate_with_hole.inp
+$ ./main plate_with_hole.inp
 ```
 
 This will create a directory `FiveMoment__plate_with_hole`, and output files.
