@@ -90,9 +90,11 @@ subsection Species_1
         set components = if(x < 0.5, 1.0, 0.10); 0.0; 0.0; 0.0; if(x < 0.5, 1.0, 0.125)
     end
 
-    subsection BoundaryConditions
-        set 0 = Outflow
-        set 1 = Outflow
+    subsection BoundaryCondition_0
+        set Type = Outflow
+    end
+    subsection BoundaryCondition_1
+        set Type = Outflow
     end
 end
     )";

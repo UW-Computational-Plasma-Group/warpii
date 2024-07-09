@@ -23,6 +23,7 @@ div.inp-example pre {
     max-width: 100%;
     background-color: #dcdcdc;
     padding: 1.5em;
+    font-size: smaller;
 }
 div.content {
     display: grid;

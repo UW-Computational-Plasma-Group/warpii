@@ -105,12 +105,13 @@ def print_key_obj_docs(depth, key, obj):
 ## Print out example usage
 
 def print_single_param_usage(depth, name, param, equals_sign_location):
-    example_val = param["value"]
     spaces = " "*4*depth
     indent = len(spaces) + 4 + len(name)
     leader = f'{spaces}set <a href="#{name}">{name}</a>'
     leader_rendered_len = len(spaces) + 4 + len(name)
-    padding_spaces = " "*(equals_sign_location - leader_rendered_len + 1)
+    n_padding_spaces = (equals_sign_location - leader_rendered_len + 1)
+    padding_spaces = " "*n_padding_spaces
+    example_val = param["value"].replace('\n', '\n' + ' '*(equals_sign_location+3))
     print(f'{spaces}set <a href="#{name}">{name}</a>{padding_spaces}= {example_val}')
 
 def print_subsection_usage(depth, name, section):

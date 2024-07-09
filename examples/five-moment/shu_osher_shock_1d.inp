@@ -20,17 +20,19 @@ subsection Species_1
         set VariablesType = Primitive
         set constants = rhoL=3.857,uL=2.629,pL=10.333
         set components = if(x < -4.0, rhoL, 1 + 0.2*sin(5*x)); \
-                                  if(x < -4.0, uL, 0.0); \
-                                  0; 0; \
-                                  if(x < -4.0, pL, 1.0)
+                         if(x < -4.0, uL, 0.0); 0; 0; \
+                         if(x < -4.0, pL, 1.0)
     end
 
-    subsection BoundaryConditions
-        set 0 = Inflow
-        subsection 0_Inflow
+    subsection BoundaryCondition_0
+        set Type = Inflow
+        subsection InflowFunction
             set constants = rhoL=3.857,uL=2.629,pL=10.333
             set components = rhoL; uL; 0; 0; pL
         end
-        set 1 = Outflow
+    end
+
+    subsection BoundaryCondition_1
+        set Type = Outflow
     end
 end

@@ -15,4 +15,16 @@ namespace warpii {
     void declare_write_output(ParameterHandler& prm);
 
     void declare_n_writeout_frames(ParameterHandler& prm);
+
+    /**
+     * Declare a dummy parameter inside the current section. The dummy parameter
+     * is named `section_documentation`, and its documentation will be associated
+     * to the current section in the generated documentation.
+     *
+     * If `is_multisection` is true, multiple occurrences of this section
+     * will be grouped together in the documentation under the heading "SectionName_i".
+     */
+    void declare_section_documentation(ParameterHandler& prm, 
+            std::string documentation,
+            bool is_multisection=false);
 }

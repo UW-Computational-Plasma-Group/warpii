@@ -44,4 +44,9 @@ namespace warpii {
                 "Setting this to 10 will write out frame 0 through frame 10, "
                 "for a total of 11 snapshots.");
     }
+
+    void declare_section_documentation(ParameterHandler& prm, std::string documentation, bool is_multisection) {
+        prm.declare_entry("section_documentation", is_multisection ? "multisection" : "", Patterns::Anything(),
+                documentation);
+    }
 }
