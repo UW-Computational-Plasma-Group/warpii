@@ -62,8 +62,6 @@ The spatial coordinates are defined as variables `x, y, z`, and time as the vari
     prm.declare_entry(
         "constants", "", Patterns::Anything(),
         "Constants to use in the expression syntax. pi is defined by default.");
-
-    Functions::ParsedFunction<dim>::declare_parameters(prm, 5);
 }
 
 template <int dim>

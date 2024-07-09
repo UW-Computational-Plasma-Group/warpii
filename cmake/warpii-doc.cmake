@@ -9,6 +9,10 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/docs/doxylayout.in.xml"
 set(docs_src_dir "${CMAKE_CURRENT_SOURCE_DIR}/docs")
 set(docs_dest_dir "${CMAKE_CURRENT_BINARY_DIR}/docs")
 
+add_custom_target(copy-readme
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/README.md" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
+    COMMENT "Copying README.md to build tree")
+
 add_custom_target(copy-docs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${docs_src_dir} ${docs_dest_dir}
     COMMENT "Copying docs/ directory to build tree")
@@ -19,7 +23,7 @@ add_custom_target(doxygen
     COMMENT "Generating documentation with Doxygen"
     VERBATIM)
 
-add_dependencies(doxygen copy-docs)
+add_dependencies(doxygen copy-docs copy-readme)
 
 add_test(
     NAME DoxygenTest

@@ -75,6 +75,10 @@
       {
         "name": "ci-ubuntu",
         "configurePreset": "ci-ubuntu"
+      },
+      {
+        "name": "documentation",
+        "configurePreset": "documentation"
       }
   ]
 }

@@ -1,0 +1,32 @@
+.param-name {
+    font-family: monospace;
+    font-weight: bold;
+}
+.param-options {
+    margin-left: 2em;
+    font-size: smaller;
+    font-family: monospace;
+}
+.param-doc {
+    white-space: pre-wrap;
+}
+.inline-code {
+    font-family: monospace;
+}
+div.params-list {
+}
+div.inp-example {
+}
+div.inp-example pre {
+    overflow-x: auto;
+    max-height: 85vh;
+    max-width: 100%;
+    background-color: #dcdcdc;
+    padding: 1.5em;
+}
+div.content {
+    display: grid;
+    grid-template-columns: 50% 30%;
+    gap: 20px;
+}
+

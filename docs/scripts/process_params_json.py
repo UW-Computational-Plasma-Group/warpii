@@ -104,27 +104,49 @@ def print_key_obj_docs(depth, key, obj):
 
 ## Print out example usage
 
-def print_single_param_usage(depth, name, param):
+def print_single_param_usage(depth, name, param, equals_sign_location):
     example_val = param["value"]
     spaces = " "*4*depth
-    print(f'{spaces}set <a href="#{name}">{name}</a>\t= {example_val}')
+    indent = len(spaces) + 4 + len(name)
+    leader = f'{spaces}set <a href="#{name}">{name}</a>'
+    leader_rendered_len = len(spaces) + 4 + len(name)
+    padding_spaces = " "*(equals_sign_location - leader_rendered_len + 1)
+    print(f'{spaces}set <a href="#{name}">{name}</a>{padding_spaces}= {example_val}')
 
 def print_subsection_usage(depth, name, section):
     spaces = " "*depth*4
     html_name = f'<a href="#{name}">{name}</a>'
 
-    print(spaces + f"subsection {html_name}")
+    if depth >= 0:
+        print(spaces + f"subsection {html_name}")
+
+    # Determine the location of the equals sign for single params in this section
+    equals_sign_location = 4*depth
+    max_terminal_param_key_len = 0
+    for key in section.keys():
+        if is_terminal_param(section[key]):
+            max_terminal_param_key_len = max(max_terminal_param_key_len, len(key))
+            
+    # 4*depth spaces preceding `set`
+    # 4 for `set `
+    # key length
+    # 1 for ensuring a space precedes `=`
+    equals_sign_location = 4*depth + 4 + max_terminal_param_key_len + 2
+    equals_sign_location = ((equals_sign_location // 8) + 1) * 8
+
     for key in section.keys():
         obj = section[key]
-        print_key_obj_usage(depth+1, key, obj)
-    print(spaces + "end")
+        print_key_obj_usage(depth+1, key, obj, equals_sign_location)
+
+    if depth >= 0:
+        print(spaces + "end")
 
 
-def print_key_obj_usage(depth, key, obj):
+def print_key_obj_usage(depth, key, obj, equals_sign_location):
     if is_subsection(obj):
         print_subsection_usage(depth, key, obj)
     elif is_terminal_param(obj):
-        print_single_param_usage(depth, key, obj)
+        print_single_param_usage(depth, key, obj, equals_sign_location)
 
 
 
@@ -137,9 +159,6 @@ print(r'</div>') #params-list
 
 print(r'<div class="inp-example">')
 print(r'<pre>')
-for key in params.keys():
-    obj = params[key]
-    print_key_obj_usage(1, key, obj)
+print_key_obj_usage(-1, 'all', params, 0)
 print(r'</pre>')
 print(r'</div>') #params-list
-
