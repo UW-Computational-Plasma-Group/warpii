@@ -28,21 +28,8 @@ void PHMaxwellSolutionHelper<dim>::project_field_quantities(
     for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
         phi.reinit(cell);
         for (const unsigned int q : phi.quadrature_point_indices()) {
-            Tensor<1, 8, VectorizedArray<double>> val;
             const auto p = phi.quadrature_point(q);
-            const auto E_bdy = evaluate_function<dim, VA, 3>(*func.E_func, p);
-            const auto B_bdy = evaluate_function<dim, VA, 3>(*func.B_func, p);
-            const auto phi_bdy =
-                evaluate_function<dim, double, VA>(*func.phi_func, p, 0);
-            const auto psi_bdy =
-                evaluate_function<dim, double, VA>(*func.psi_func, p, 0);
-
-            for (unsigned int d = 0; d < 3; d++) {
-                val[d] = E_bdy[d];
-                val[d+3] = B_bdy[d];
-            }
-            val[6] = phi_bdy;
-            val[7] = psi_bdy;
+            Tensor<1, 8, VectorizedArray<double>> val = evaluate_function<dim, VA, 8>(*func.func, p);
             phi.submit_dof_value(val, q);
         }
         inverse.transform_from_q_points_to_basis(8, phi.begin_dof_values(),

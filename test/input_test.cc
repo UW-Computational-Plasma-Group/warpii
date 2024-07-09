@@ -32,8 +32,7 @@ end
 subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
+        set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end
 end
     )";
@@ -87,8 +86,8 @@ end
 subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function constants = gamma=1.66667
-        set Function expression = if(x < 0.5, 1.0, 0.10); 0.0; 0.0; 0.0; if(x < 0.5, 1.0, 0.125)
+        set constants = gamma=1.66667
+        set components = if(x < 0.5, 1.0, 0.10); 0.0; 0.0; 0.0; if(x < 0.5, 1.0, 0.125)
     end
 
     subsection BoundaryConditions
@@ -122,8 +121,7 @@ end
 subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
+        set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end
 end
     )";
@@ -156,8 +154,7 @@ end
 subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*(x+y)); 1.0; 1.0; 0.0; 1.0
+        set components = 1 + 0.6 * sin(2*pi*(x+y)); 1.0; 1.0; 0.0; 1.0
     end
 end
     )";

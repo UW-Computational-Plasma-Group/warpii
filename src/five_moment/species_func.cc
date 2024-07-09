@@ -31,6 +31,38 @@ double SpeciesFunc<dim>::value(const Point<dim> &pt,
 template <int dim>
 void SpeciesFunc<dim>::declare_parameters(ParameterHandler& prm) {
     prm.declare_entry("VariablesType", "Primitive", Patterns::Selection("Primitive|Conserved"));
+
+    prm.declare_entry(
+        "components",
+        R"(0; \
+0; 0; 0; \
+0)",
+        Patterns::Anything(),
+        R"(Expressions for the moments of a five-moment species. 
+If `VariablesType == Primitive`, the components will be interpreted as
+```
+rho, ux, uy, uz, p
+```
+where rho is the mass density, u is the velocity, and p the scalar pressure.
+
+If `VariablesType == Conserved`, the components will be interpreted as
+```
+rho, rho*ux, rho*uy, rho*uz, e
+```
+where e is the scalar total energy, related to the pressure by
+```
+e = p / (gamma - 1) + 0.5*rho*|u|^2.
+```
+
+The expressions may use the formula syntax from the [FunctionParser](https://www.dealii.org/current/doxygen/deal.II/classFunctionParser.html) class.
+
+The spatial coordinates are defined as variables `x, y, z`, and time as the variable `t`.
+)");
+
+    prm.declare_entry(
+        "constants", "", Patterns::Anything(),
+        "Constants to use in the expression syntax. pi is defined by default.");
+
     Functions::ParsedFunction<dim>::declare_parameters(prm, 5);
 }
 
@@ -43,9 +75,43 @@ std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(Param
     } else {
         variables_type = CONSERVED;
     }
-    std::unique_ptr<Functions::ParsedFunction<dim>> func =
-        std::make_unique<Functions::ParsedFunction<dim>>(5);
-    func->parse_parameters(prm);
+
+    std::map<std::string, double> constants;
+    constants["pi"] = numbers::PI;
+
+    std::string vnames;
+    switch (dim) {
+        case 1:
+            vnames = "x,t";
+            break;
+        case 2:
+            vnames = "x,y,t";
+            break;
+        case 3:
+            vnames = "x,y,z,t";
+            break;
+        default:
+            AssertThrow(false, ExcNotImplemented());
+            break;
+    }
+    std::string expression = prm.get("components");
+    std::string constants_list = prm.get("constants");
+
+    std::vector<std::string> const_list =
+        Utilities::split_string_list(constants_list, ',');
+    for (const auto& constant : const_list) {
+        std::vector<std::string> this_c =
+            Utilities::split_string_list(constant, '=');
+        AssertThrow(this_c.size() == 2,
+                    ExcMessage("The list of constants, <" + constants_list +
+                               ">, is not a comma-separated list of "
+                               "entries of the form 'name=value'."));
+        constants[this_c[0]] = Utilities::string_to_double(this_c[1]);
+    }
+
+    std::unique_ptr<FunctionParser<dim>> func = std::make_unique<FunctionParser<dim>>(5);
+    func->initialize(vnames, expression, constants, true);
+
     return std::make_unique<SpeciesFunc<dim>>(std::move(func), variables_type, gas_gamma);
 }
 

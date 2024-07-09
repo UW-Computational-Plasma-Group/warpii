@@ -229,33 +229,26 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             phi_m = val_m[6];
             psi_m = val_m[7];
 
-            Tensor<1, 3, VA> E_bdy;
-            Tensor<1, 3, VA> B_bdy;
-            VA phi_bdy;
-            VA psi_bdy;
+            Tensor<1, 8, VA> val_bdy;
+
             if (bc_type == MaxwellBCType::PERFECT_CONDUCTOR) {
                 // Just the normal component of E
-                E_bdy = (n3d * E_m) * n3d;
+                const auto E_bdy = (n3d * E_m) * n3d;
                 // Just the tangential components of B
-                B_bdy = B_m - (n3d * B_m) * n3d;
-                phi_bdy = VA(0.0);
-                psi_bdy = VA(0.0);
+                const auto B_bdy = B_m - (n3d * B_m) * n3d;
+                const auto phi_bdy = VA(0.0);
+                const auto psi_bdy = VA(0.0);
+                for (unsigned int d = 0; d < 3; d++) {
+                    val_bdy[d] = E_bdy[d];
+                    val_bdy[d+3] = B_bdy[d];
+                }
+                val_bdy[6] = phi_bdy;
+                val_bdy[7] = psi_bdy;
             } else if (bc_type == MaxwellBCType::DIRICHLET) {
                 const auto p = fe_eval_m.quadrature_point(q);
                 const auto& func = fields->get_bc_map().get_dirichlet_func(boundary_id);
-                E_bdy = evaluate_function<dim, VA, 3>(*func.E_func, p);
-                B_bdy = evaluate_function<dim, VA, 3>(*func.B_func, p);
-                phi_bdy = evaluate_function<dim, double, VA>(*func.phi_func, p, 0);
-                psi_bdy = evaluate_function<dim, double, VA>(*func.psi_func, p, 0);
+                val_bdy = evaluate_function<dim, VA, 8>(*func.func, p);
             }
-
-            Tensor<1, 8, VA> val_bdy;
-            for (unsigned int d = 0; d < 3; d++) {
-                val_bdy[d] = E_bdy[d];
-                val_bdy[d+3] = B_bdy[d];
-            }
-            val_bdy[6] = phi_bdy;
-            val_bdy[7] = psi_bdy;
 
             const Tensor<1, 8, VA> val_p = 2.0*val_bdy - val_m;
 

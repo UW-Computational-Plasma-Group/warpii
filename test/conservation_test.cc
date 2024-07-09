@@ -22,8 +22,7 @@ end
 subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function constants = pi=3.1415926535
-        set Function expression = 1.4 + 0.6 * sin(2*pi*x); 0.98; 0.0; 0.0; 1.0
+        set components = 1.4 + 0.6 * sin(2*pi*x); 0.98; 0.0; 0.0; 1.0
     end
 end
     )";
@@ -58,8 +57,7 @@ end
 
 subsection Species_1
     subsection InitialCondition
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
+        set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end
 end
     )";
@@ -100,15 +98,14 @@ end
 
 subsection Species_1
     subsection InitialCondition
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
+        set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end
 
     subsection BoundaryConditions
         set 0 = Inflow
         subsection 0_Inflow
-            set Function constants = gamma=1.66667,rhoL=3.857,uL=2.629,pL=10.333
-            set Function expression = rhoL; uL; 0.0; 0.0; pL
+            set constants = gamma=1.66667,rhoL=3.857,uL=2.629,pL=10.333
+            set components = rhoL; uL; 0.0; 0.0; pL
         end
         set 1 = Outflow
     end
