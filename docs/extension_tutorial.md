@@ -19,7 +19,7 @@ $ cd my_extension
 ```
 - Now create a file `main.cc` in `my_extension` with the following contents:
 ```cpp
-# my_extension/main.cc
+// my_extension/main.cc
 
 #include "src/five_moment/extension.h"
 #include "src/warpii.h"
@@ -147,8 +147,8 @@ subsection Species_1
         set components = 1; 0.1; 0.1; 0.0; 1.0
     end
 
-    subsection BoundaryConditions
-        set 4=Wall
+    subsection BoundaryCondition_4
+        set Type = Wall
     end
 end
 ```
