@@ -38,7 +38,7 @@ jobs:
         run: apt-get install -y doxygen
 
       - name: Build docs
-        run: make doc
+        run: make doc CMAKE_BUILD_PARALLEL_LEVEL=2
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
