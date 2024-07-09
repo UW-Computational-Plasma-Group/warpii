@@ -21,6 +21,7 @@ subsection Species_1
         set Function constants = rhoL=3.857,uL=2.629,pL=10.333
         set Function expression = if(x < -4.0, rhoL, 1 + 0.2*sin(5*x)); \
                                   if(x < -4.0, uL, 0.0); \
+                                  0; 0; \
                                   if(x < -4.0, pL, 1.0)
     end
 
@@ -28,7 +29,7 @@ subsection Species_1
         set 0 = Inflow
         subsection 0_Inflow
             set Function constants = rhoL=3.857,uL=2.629,pL=10.333
-            set Function expression = rhoL; uL; pL
+            set Function expression = rhoL; uL; 0; 0; pL
         end
         set 1 = Outflow
     end

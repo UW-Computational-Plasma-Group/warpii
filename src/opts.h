@@ -25,6 +25,12 @@ struct WarpiiOpts {
     bool help;
 
     /**
+     * Whether the print_parameter_description flag has been set.
+     * If this is set, all other options may have been ignored during parsing.
+     */
+    bool print_parameter_description;
+
+    /**
      * Whether floating point exceptions (FPEs) are enabled.
      */
     bool fpe;
@@ -36,7 +42,9 @@ struct WarpiiOpts {
 
     WarpiiOpts() : 
         input_is_from_file(false), input(""), 
-        help(false), fpe(false), setup_only(false) {}
+        help(false), 
+        print_parameter_description(false),
+        fpe(false), setup_only(false) {}
 };
 
 WarpiiOpts parse_opts(int argc, char **argv);

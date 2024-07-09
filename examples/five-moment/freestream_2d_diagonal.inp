@@ -17,6 +17,7 @@ subsection Species_1
         set Function expression = 1 + 0.6 * sin(2*pi*(x+y)); \
                                   1 + 0.6 * sin(2*pi*(x+y)); \
                                   1 + 0.6 * sin(2*pi*(x+y)); \
+                                  0; \
                                   0.5 * 2*(1 + 0.6*sin(2*pi*(x+y))) + 1.5
     end
 end
