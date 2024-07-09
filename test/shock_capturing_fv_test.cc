@@ -30,11 +30,10 @@ subsection geometry
 end
 subsection Species_1
     subsection InitialCondition
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(0.2*pi*(x)); \
-                                  1 + 0.6 * sin(0.2*pi*(x)); \
-                                  0.0; 0.0; \
-                                  0.5 * (1 + 0.6*sin(0.2*pi*(x))) + 1.5
+        set components = 1 + 0.6 * sin(0.2*pi*(x)); \
+                         1 + 0.6 * sin(0.2*pi*(x)); \
+                         0.0; 0.0; \
+                         0.5 * (1 + 0.6*sin(0.2*pi*(x))) + 1.5
     end
 end
 )";
@@ -113,12 +112,11 @@ subsection geometry
 end
 subsection Species_1
     subsection InitialCondition
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(0.2*pi*(x+y)); \
-                                  1 + 0.6 * sin(0.2*pi*(x+y)); \
-                                  1 + 0.6 * sin(0.2*pi*(x+y)); \
-                                  0.0; \
-                                  0.5 * (1 + 0.6*sin(0.2*pi*(x+y))) + 1.5
+        set components = 1 + 0.6 * sin(0.2*pi*(x+y)); \
+                         1 + 0.6 * sin(0.2*pi*(x+y)); \
+                         1 + 0.6 * sin(0.2*pi*(x+y)); \
+                         0.0; \
+                         0.5 * (1 + 0.6*sin(0.2*pi*(x+y))) + 1.5
     end
 end
 )";

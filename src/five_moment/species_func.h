@@ -15,7 +15,7 @@ enum SpeciesFuncVariablesType {
 template <int dim>
 class SpeciesFunc : public Function<dim> {
    public:
-    SpeciesFunc(std::unique_ptr<Functions::ParsedFunction<dim>> func,
+    SpeciesFunc(std::unique_ptr<FunctionParser<dim>> func,
                 SpeciesFuncVariablesType variables_type, double gas_gamma)
         : Function<dim>(5),
           func(std::move(func)),
@@ -31,7 +31,7 @@ class SpeciesFunc : public Function<dim> {
                                                    double gas_gamma);
 
    private:
-    std::unique_ptr<Functions::ParsedFunction<dim>> func;
+    std::unique_ptr<FunctionParser<dim>> func;
     SpeciesFuncVariablesType variables_type;
     double gas_gamma;
 };
