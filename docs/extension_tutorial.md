@@ -141,7 +141,7 @@ end
 
 set n_boundaries = 5
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set components = 1; 0.1; 0.1; 0.0; 1.0

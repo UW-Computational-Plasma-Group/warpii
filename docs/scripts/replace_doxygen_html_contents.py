@@ -11,7 +11,8 @@ def replace_with_file_contents(source_file, replacement_file):
         replacement_body = f.read()
         replacement = r'<div class="content">' + replacement_body + r'</div><!-- content -->'
 
-    pattern = r'<div class=\"contents\".*-- contents -->'
+    #pattern = r'<div class=\"contents\".*-- contents -->'
+    pattern = r'<div>replace_me</div>'
     # Perform the replacement
     new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
 

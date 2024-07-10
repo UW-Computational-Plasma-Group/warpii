@@ -19,7 +19,7 @@ subsection geometry
     set right = 1.0
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set components = 1.4 + 0.6 * sin(2*pi*x); 0.98; 0.0; 0.0; 1.0
@@ -55,7 +55,7 @@ subsection geometry
     set right = 1.0
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end
@@ -96,7 +96,7 @@ subsection geometry
     set periodic_dimensions =
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
     end

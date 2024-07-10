@@ -15,7 +15,7 @@ subsection geometry
     set periodic_dimensions =
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set constants = rhoL=3.857,uL=2.629,pL=10.333

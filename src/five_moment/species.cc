@@ -9,10 +9,21 @@ namespace five_moment {
 template <int dim>
 void Species<dim>::declare_parameters(ParameterHandler &prm,
                                       unsigned int n_boundaries) {
+
+    declare_section_documentation(prm, 
+            "Constants, boundary conditions and initial conditions for "
+            "species i.", true);
+
     prm.declare_entry("name", "neutral",
-                      Patterns::Selection("neutral|ion|electron"));
-    prm.declare_entry("charge", "0.0", Patterns::Double());
-    prm.declare_entry("mass", "1.0", Patterns::Double(0.0));
+                      Patterns::Selection("neutral|ion|electron"),
+                      "The name of the species. There is no reason this couldn't be a free-form "
+                      "field in the future.");
+    prm.declare_entry("charge", "0.0", Patterns::Double(),
+            "The nondimensional charge `Z` of the species. "
+            "See [Normalization](#Normalization).");
+    prm.declare_entry("mass", "1.0", Patterns::Double(0.0),
+            "The nondimensional mass `A` of the species. "
+            "See [Normalization](#Normalization).");
     {
         for (unsigned int i = 0; i < n_boundaries; i++) {
             prm.enter_subsection("BoundaryCondition_" + std::to_string(i));
@@ -21,8 +32,11 @@ void Species<dim>::declare_parameters(ParameterHandler &prm,
                     "Five-moment species boundary condition specification for the boundary "
                     "`boundary_id == i`.", true);
 
-            prm.declare_entry("Type", "Wall",
-                              Patterns::Selection("Wall|Outflow|Inflow"));
+            prm.declare_entry("Type", "Wall", Patterns::Selection("Wall|Outflow|Inflow"),
+                              R"(The type of boundary condition.
+- `Wall`: an impermeable wall. Normal velocity is set to zero.
+- `Outflow`: copy-out boundary condition, suitable for outflow boundaries.
+- `Inflow`: a Dirichlet boundary condition suitable for inflow boundaries. See [InflowFunction](#InflowFunction).)");
             prm.enter_subsection("InflowFunction");
             SpeciesFunc<dim>::declare_parameters(prm);
             prm.leave_subsection(); // InflowFunction

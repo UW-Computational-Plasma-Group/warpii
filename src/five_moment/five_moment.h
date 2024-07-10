@@ -108,7 +108,7 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
     std::vector<Species<dim>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
-        subsection_name << "Species_" << i + 1;
+        subsection_name << "Species_" << i;
         prm.enter_subsection(subsection_name.str());
         Species<dim>::declare_parameters(prm, n_boundaries);
         prm.leave_subsection();
@@ -133,10 +133,8 @@ where `phi` and `psi` are the scalar divergence error indicators for Gauss's law
 as used in the perfectly hyperbolic Maxwell's equation system.
             )");
     prm.declare_entry("gas_gamma", "1.6666666666667", Patterns::Double(),
-            R"(
-The gas gamma, AKA the ratio of specific heats, AKA `(n_dims+2)/2` for a plasma.
-Defaults to 5/3, the value for simple ions with 3 degrees of freedom.
-            )");
+            R"(The gas gamma, AKA the ratio of specific heats, AKA `(n_dims+2)/2` for a plasma.
+Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
     declare_t_end(prm);
     declare_write_output(prm);
     declare_n_writeout_frames(prm);
@@ -156,7 +154,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
-        subsection_name << "Species_" << i + 1;
+        subsection_name << "Species_" << i;
         prm.enter_subsection(subsection_name.str());
         species.push_back(
             Species<dim>::create_from_parameters(prm, n_boundaries, gas_gamma));

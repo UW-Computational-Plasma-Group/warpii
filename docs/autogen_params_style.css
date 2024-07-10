@@ -1,3 +1,8 @@
+.single-param-container {
+    padding-top: 8px;
+    border-top: thin solid #dfdfdf; 
+}
+
 .param-name {
     font-family: monospace;
     font-weight: bold;
@@ -13,7 +18,14 @@
 .param-section-name {
     font-family: monospace;
 }
-div.param-section-name-container-1 {
+.param-section-name-container-1 {
+    border-top: 3px solid #9f9f9f; 
+}
+.param-section-name-container-2 {
+    border-top: 2px solid #9f9f9f; 
+}
+.param-section-name-container-3 {
+    border-top: 1px solid #9f9f9f; 
 }
 .param-options {
     margin-left: 1em;

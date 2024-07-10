@@ -1,4 +1,5 @@
 #include <deal.II/base/parameter_handler.h>
+#include "common_params.h"
 #include "normalization.h"
 
 using namespace dealii;
