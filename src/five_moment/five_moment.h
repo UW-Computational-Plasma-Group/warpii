@@ -120,8 +120,6 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
     declare_fe_degree(prm);
     prm.declare_entry("fields_enabled", "auto", Patterns::Selection("true|false|auto"),
             R"(Whether electromagnetic fields are enabled for this problem.
-
-Values:
     - `true`: fields are enabled and will be evolved
     - `false`: fields are disabled
     - `auto`: fields are enabled if and only if `n_species >= 2`

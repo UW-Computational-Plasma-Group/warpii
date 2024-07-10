@@ -38,18 +38,24 @@ def group_li_tags(text):
 def process_documentation_markdown(doc):
     # Replace list entries starting with `-` with <li> tag pairs
     doc = re.sub(r'^\s*- (.*$)', r'<li>\1</li>', doc, flags=re.M)
+    # Replace block ``` code tags with <pre> tags
+    doc = re.sub(r'```(.*?)```', r'<pre class="block-code">\1</pre>', doc, flags=re.S)
     # Replace inline `` tags with inline code
     doc = re.sub(r'`(.*?)`', r'<span class="inline-code">\1</span>', doc, flags=re.M)
+    # Replace []() link syntax with anchor tags
+    doc = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', doc, flags=re.M)
     return group_li_tags(doc)
 
 
 def process_param_options(desc):
     if desc == "[Anything]":
         return "string"
-    if desc == "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]":
-        return "real number"
-    if desc == "[Double 0...MAX_DOUBLE (inclusive)]":
-        return "positive real number"
+    if desc.startswith("[Double"):
+        return "double"
+    if desc == "[Bool]":
+        return "true | false"
+    if desc.startswith("[Integer"):
+        return "integer"
     m = re.search(r'^\[Selection (.*) \]', desc)
     if m is not None:
         return ' | '.join(m.groups()[0].split('|'))
@@ -75,22 +81,30 @@ def is_subsection(obj):
 ## Printing out param documentation
 
 def print_single_param_docs(depth, name, param):
+    if name == 'section_documentation':
+        return
+
     documentation = process_documentation_markdown(param["documentation"])
-    default_val = param["default_value"]
+    default_val = param["default_value"].replace("\\\n", "")
     options = process_param_options(param["pattern_description"])
     print(f"""
 <div>
     <span class="param-name" id="{name}">{name}</span><span class="param-options">{options}</span>
-    </br>
-    <p class="param-doc">
-          {documentation}
-    </p>
+    <br/>
+    <span class="param-default-val-label">Default:</span>
+    <span class="param-default-val">{default_val}</span>
+    <br/>
+    <p class="param-doc">{documentation}</p>
     <hr/>
 </div>
 """)
 
 def print_subsection_docs(depth, name, section):
-    print(f'<h{depth} id="{name}">{name}</h{depth}>')
+    print(f'<div class="param-section-name-container-{depth}"><h{depth} class="param-section-name" id="{name}">{name}</h{depth}></div>')
+    if 'section_documentation' in section.keys():
+        documentation = process_documentation_markdown(section['section_documentation']['documentation'])
+        print(f"""<p class="param-doc">{documentation}</p>""")
+
     for key in section.keys():
         obj = section[key]
         print_key_obj_docs(depth+1, key, obj)
@@ -105,6 +119,9 @@ def print_key_obj_docs(depth, key, obj):
 ## Print out example usage
 
 def print_single_param_usage(depth, name, param, equals_sign_location):
+    if name == 'section_documentation':
+        return
+
     spaces = " "*4*depth
     indent = len(spaces) + 4 + len(name)
     leader = f'{spaces}set <a href="#{name}">{name}</a>'
@@ -114,12 +131,17 @@ def print_single_param_usage(depth, name, param, equals_sign_location):
     example_val = param["value"].replace('\n', '\n' + ' '*(equals_sign_location+3))
     print(f'{spaces}set <a href="#{name}">{name}</a>{padding_spaces}= {example_val}')
 
-def print_subsection_usage(depth, name, section):
+def print_subsection_usage(depth, name, section, toplevel_only):
     spaces = " "*depth*4
     html_name = f'<a href="#{name}">{name}</a>'
 
     if depth >= 0:
         print(spaces + f"subsection {html_name}")
+        if toplevel_only:
+            print("...")
+            print("end")
+            return
+
 
     # Determine the location of the equals sign for single params in this section
     equals_sign_location = 4*depth
@@ -137,29 +159,50 @@ def print_subsection_usage(depth, name, section):
 
     for key in section.keys():
         obj = section[key]
-        print_key_obj_usage(depth+1, key, obj, equals_sign_location)
+        print_key_obj_usage(depth+1, key, obj, equals_sign_location, toplevel_only)
 
     if depth >= 0:
         print(spaces + "end")
 
 
-def print_key_obj_usage(depth, key, obj, equals_sign_location):
+def print_key_obj_usage(depth, key, obj, equals_sign_location, toplevel_only):
+    if toplevel_only and depth == 1:
+        return
     if is_subsection(obj):
-        print_subsection_usage(depth, key, obj)
+        print_subsection_usage(depth, key, obj, toplevel_only)
     elif is_terminal_param(obj):
         print_single_param_usage(depth, key, obj, equals_sign_location)
 
 
 
 
+print(r'<div class="params-section">') # Top-level section
 print(r'<div class="params-list">')
 for key in params.keys():
     obj = params[key]
-    print_key_obj_docs(1, key, obj)
-print(r'</div>') #params-list
+    if is_terminal_param(obj):
+        print_single_param_docs(1, key, obj)
+print(r'</div>') # params-list
 
 print(r'<div class="inp-example">')
 print(r'<pre>')
-print_key_obj_usage(-1, 'all', params, 0)
+print_key_obj_usage(-1, 'all', params, 0, True)
 print(r'</pre>')
-print(r'</div>') #params-list
+print(r'</div>') # inp-example
+print(r'</div>') # params-section
+
+for key in params.keys():
+    obj = params[key]
+    if is_subsection(obj):
+        print(r'<div class="params-section">')
+        print(r'<div class="params-list">')
+        print_key_obj_docs(1, key, obj)
+        print(r'</div>') # params-list
+
+        print(r'<div class="inp-example">')
+        print(r'<pre>')
+        print_key_obj_usage(0, key, obj, 0, False)
+        print(r'</pre>')
+        print(r'</div>') # inp-example
+        print(r'</div>') # params-section
+        
