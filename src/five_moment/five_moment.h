@@ -108,7 +108,7 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
     std::vector<Species<dim>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
-        subsection_name << "Species_" << i + 1;
+        subsection_name << "Species_" << i;
         prm.enter_subsection(subsection_name.str());
         Species<dim>::declare_parameters(prm, n_boundaries);
         prm.leave_subsection();
@@ -119,26 +119,22 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
 
     declare_fe_degree(prm);
     prm.declare_entry("fields_enabled", "auto", Patterns::Selection("true|false|auto"),
-            R"(
-Whether electromagnetic fields are enabled for this problem.
-Values:
-    - true: fields are enabled and will be evolved
-    - false: fields are disabled
-    - auto: fields are enabled if and only if n_species >= 2
+            R"(Whether electromagnetic fields are enabled for this problem.
+    - `true`: fields are enabled and will be evolved
+    - `false`: fields are disabled
+    - `auto`: fields are enabled if and only if `n_species >= 2`
 
 If enabled, the solver always uses 8 components for the EM fields regardless of n_dims.
 The components are
-
+```
     [ Ex, Ey, Ez, Bx, By, Bz, phi, psi ],
-
-where phi and psi are the scalar divergence error indicators for Gauss's law and the div-B law,
+```
+where `phi` and `psi` are the scalar divergence error indicators for Gauss's law and the div-B law,
 as used in the perfectly hyperbolic Maxwell's equation system.
             )");
     prm.declare_entry("gas_gamma", "1.6666666666667", Patterns::Double(),
-            R"(
-The gas gamma, AKA the ratio of specific heats, AKA (n_dims+2)/2 for a plasma.
-Defaults to 5/3, the value for simple ions with 3 degrees of freedom.
-            )");
+            R"(The gas gamma, AKA the ratio of specific heats, AKA `(n_dims+2)/2` for a plasma.
+Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
     declare_t_end(prm);
     declare_write_output(prm);
     declare_n_writeout_frames(prm);
@@ -158,7 +154,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {
         std::stringstream subsection_name;
-        subsection_name << "Species_" << i + 1;
+        subsection_name << "Species_" << i;
         prm.enter_subsection(subsection_name.str());
         species.push_back(
             Species<dim>::create_from_parameters(prm, n_boundaries, gas_gamma));
@@ -219,12 +215,10 @@ FiveMomentDGSolver<dim> &FiveMomentApp<dim>::get_solver() {
 
 template <int dim>
 void FiveMomentApp<dim>::setup(WarpiiOpts) {
-    std::cout << "Setting up" << std::endl;
     grid->reinit();
     if (dim == 2) {
         grid->output_svg("grid.svg");
     }
-    std::cout << "Wrote out svg" << std::endl;
     solver->reinit();
     solver->project_initial_condition();
     output_results(0);

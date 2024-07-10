@@ -26,7 +26,7 @@ LAYOUT_FILE            = doxylayout.xml
 
 IMAGE_PATH = docs/images
 
-HTML_EXTRA_STYLESHEET = docs/style.css
+HTML_EXTRA_STYLESHEET = docs/style.css docs/autogen_params_style.css
 HTML_COLORSTYLE        = LIGHT
 
 SEARCHENGINE = YES

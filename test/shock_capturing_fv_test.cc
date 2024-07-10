@@ -28,7 +28,7 @@ subsection geometry
     set right = 0.34
     set nx = 1
 end
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set components = 1 + 0.6 * sin(0.2*pi*(x)); \
                          1 + 0.6 * sin(0.2*pi*(x)); \
@@ -110,7 +110,7 @@ subsection geometry
     set right = 0.34,0.27
     set nx = 1,1
 end
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set components = 1 + 0.6 * sin(0.2*pi*(x+y)); \
                          1 + 0.6 * sin(0.2*pi*(x+y)); \

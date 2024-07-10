@@ -8,6 +8,7 @@
 
 #include "bc_map.h"
 #include "phmaxwell_func.h"
+#include "../common_params.h"
 
 using namespace dealii;
 
@@ -25,15 +26,21 @@ void PHMaxwellFields<dim>::declare_parameters(ParameterHandler &prm,
     PHMaxwellFunc<dim>::declare_parameters(prm);
     prm.leave_subsection();  // InitialCondition
 
-    prm.enter_subsection("BoundaryConditions");
     for (unsigned int i = 0; i < n_boundaries; i++) {
-        prm.declare_entry(std::to_string(i), "Dirichlet",
+        prm.enter_subsection("BoundaryCondition_" + std::to_string(i));
+
+        declare_section_documentation(prm, 
+                "PHMaxwell boundary condition specification for the boundary "
+                "with `boundary_id == i`.", true);
+
+        prm.declare_entry("Type", "Dirichlet",
                           Patterns::Selection("PerfectConductor|Dirichlet"));
-        prm.enter_subsection(std::to_string(i) + "_Dirichlet");
+        prm.enter_subsection("DirichletFunction");
         PHMaxwellFunc<dim>::declare_parameters(prm);
         prm.leave_subsection();
+
+        prm.leave_subsection();  // BoundaryCondition_i
     }
-    prm.leave_subsection();  // BoundaryConditions
 
     prm.leave_subsection();  // PHMaxwellFields
 }
@@ -53,21 +60,21 @@ PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
     prm.leave_subsection();
 
     MaxwellBCMap<dim> bc_map;
-    prm.enter_subsection("BoundaryConditions");
     for (unsigned int i = 0; i < n_boundaries; i++) {
-        std::string bc_type = prm.get(std::to_string(i));
+        prm.enter_subsection("BoundaryCondition_" + std::to_string(i));
+        std::string bc_type = prm.get("Type");
         auto boundary_id = static_cast<types::boundary_id>(i);
 
         if (bc_type == "PerfectConductor") {
             bc_map.set_perfect_conductor_boundary(boundary_id);
         } else if (bc_type == "Dirichlet") {
-            prm.enter_subsection(std::to_string(i) + "_Dirichlet");
+            prm.enter_subsection("DirichletFunction");
             auto func = PHMaxwellFunc<dim>::create_from_parameters(prm);
             prm.leave_subsection();
             bc_map.set_dirichlet_boundary(boundary_id, std::move(func));
         }
+        prm.leave_subsection();  // BoundaryConditions
     }
-    prm.leave_subsection();  // BoundaryConditions
 
     prm.leave_subsection(); // PHMaxwellFields
     return std::make_shared<PHMaxwellFields<dim>>(

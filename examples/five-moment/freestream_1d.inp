@@ -15,6 +15,6 @@ subsection Species_1
     subsection InitialCondition
         set VariablesType = Primitive
         set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 1.0
+        set Function expression = 1 + 0.6 * sin(2*pi*x); 1.0; 0; 0; 1.0
     end
 end

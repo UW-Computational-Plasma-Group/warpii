@@ -46,6 +46,8 @@ WarpiiOpts parse_opts(int argc, char **argv) {
         if (arg == "--help" || arg == "-h") {
             opts.help = true;
             break;
+        } else if (arg == "--print-parameters") {
+            opts.print_parameter_description = true;
         } else if (arg == "--enable-fpe") {
             opts.fpe = true;
         } else if (arg == "--setup-only") {
@@ -98,6 +100,10 @@ Options:
                 in a full stop of the simulation.
                 When disabled, NaNs are silently propagated until, possibly, caught
                 down the line by some dealii function.
+
+  --print-parameters: Defaults to false.
+                      If this flag is enabled, WarpII will parse the provided input file
+                      and print it out.
 )";
 }
 
@@ -141,10 +147,8 @@ void Warpii::setup() {
         R"(Format string for the working directory of the simulation.
 
 Format specifier:
-    - %A: The name of the application, e.g. "FiveMoment"
-    - %I: The name of the input file without file extension. If
-          the input is taken from stdin, the specifier is replaced
-          by the string "STDIN"
+    - `%A`: The name of the application, e.g. "FiveMoment"
+    - `%I`: The name of the input file without file extension. If the input is taken from stdin, the specifier is replaced by the string "STDIN"
     )");
     prm.declare_entry("Application", "FiveMoment",
                       Patterns::Selection("FiveMoment|PerfectlyHyperbolicMaxwell|FPETest"));
@@ -186,6 +190,10 @@ void Warpii::run() {
 
     if (opts.help) {
         Warpii::print_help();
+        exit(0);
+    }
+    if (opts.print_parameter_description) {
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::JSON);
         exit(0);
     }
 

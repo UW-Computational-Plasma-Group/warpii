@@ -30,7 +30,9 @@ double SpeciesFunc<dim>::value(const Point<dim> &pt,
 
 template <int dim>
 void SpeciesFunc<dim>::declare_parameters(ParameterHandler& prm) {
-    prm.declare_entry("VariablesType", "Primitive", Patterns::Selection("Primitive|Conserved"));
+    prm.declare_entry("VariablesType", "Primitive", Patterns::Selection("Primitive|Conserved"),
+            "Indicates how the `components` expressions should be interpreted, "
+            "as primitive or conserved variables.");
 
     prm.declare_entry(
         "components",
@@ -62,8 +64,6 @@ The spatial coordinates are defined as variables `x, y, z`, and time as the vari
     prm.declare_entry(
         "constants", "", Patterns::Anything(),
         "Constants to use in the expression syntax. pi is defined by default.");
-
-    Functions::ParsedFunction<dim>::declare_parameters(prm, 5);
 }
 
 template <int dim>

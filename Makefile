@@ -72,10 +72,11 @@ test: check-env build
 install-dealii: $(WARPIISOFT)
 	cd script && $(MAKE) $(WARPIISOFT)/deps/dealii
 
-doc: check-env build
-	$(MAKE) builds/documentation/configured WARPII_CMAKE_PRESET=documentation \
-		&& cd builds/documentation \
-		&& make doxygen
+doc: check-env
+	$(MAKE) build \
+		&& cd builds/$(WARPII_CMAKE_PRESET) \
+		&& $(MAKE) doxygen \
+		&& docs/scripts/build_params_doc_pages.sh
 
 .PHONY: clean check-env required-vars-set warn-env-vars
 clean:

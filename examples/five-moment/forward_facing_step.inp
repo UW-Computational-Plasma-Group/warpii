@@ -15,7 +15,7 @@ set gas_gamma = 1.4
 
 set n_writeout_frames = 100
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set Function expression = 1.4; 3.0; 0.0; 1.0

@@ -14,7 +14,9 @@ namespace five_moment {
 void FiveMomentWrapper::declare_parameters(ParameterHandler &prm) {
     declare_n_dims(prm);
     declare_n_boundaries(prm);
-    prm.declare_entry("n_species", "1", Patterns::Integer());
+    prm.declare_entry("n_species", "1", Patterns::Integer(),
+            "The number of species in the simulation. "
+            "Each species should be configured in its respective [Species](#Species_i) subsection.");
     GridWrapper::declare_parameters(prm);
 }
 

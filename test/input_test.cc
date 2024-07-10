@@ -29,7 +29,7 @@ subsection geometry
     set right = 1.0
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
@@ -83,16 +83,18 @@ subsection geometry
     set periodic_dimensions =
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set constants = gamma=1.66667
         set components = if(x < 0.5, 1.0, 0.10); 0.0; 0.0; 0.0; if(x < 0.5, 1.0, 0.125)
     end
 
-    subsection BoundaryConditions
-        set 0 = Outflow
-        set 1 = Outflow
+    subsection BoundaryCondition_0
+        set Type = Outflow
+    end
+    subsection BoundaryCondition_1
+        set Type = Outflow
     end
 end
     )";
@@ -118,7 +120,7 @@ subsection geometry
     set nx = 100,2
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set components = 1 + 0.6 * sin(2*pi*x); 1.0; 0.0; 0.0; 1.0
@@ -151,7 +153,7 @@ subsection geometry
     set nx = 20,20
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
         set components = 1 + 0.6 * sin(2*pi*(x+y)); 1.0; 1.0; 0.0; 1.0
