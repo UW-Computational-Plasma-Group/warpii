@@ -72,7 +72,7 @@ test: check-env build
 install-dealii: $(WARPIISOFT)
 	cd script && $(MAKE) $(WARPIISOFT)/deps/dealii
 
-doc: check-env
+doc: check-env build
 	$(MAKE) builds/documentation/configured WARPII_CMAKE_PRESET=documentation \
 		&& cd builds/documentation \
 		&& make doxygen
