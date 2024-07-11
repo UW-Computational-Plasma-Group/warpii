@@ -7,13 +7,23 @@ jobs:
     steps:
       - checkout
       - run: 
-          name: "Install doxygen"
-          command: apt-get install -y doxygen
+          name: "Install dependencies"
+          command: apt-get install -y doxygen ccache
+      - restore_cache:
+          key: ccache
+      - run:
+          name: "Ensure ccache directory present"
+          command: mkdir -p $HOME/.ccache
       - run: 
           name: "Build and run tests"
           command: make test CMAKE_BUILD_PARALLEL_LEVEL=2
           environment:
             WARPII_CMAKE_PRESET: ci-ubuntu
+            CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      - save_cache:
+          key: ccache
+          paths:
+            - $HOME/.ccache
 
 
 workflows:
