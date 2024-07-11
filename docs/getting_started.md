@@ -4,7 +4,7 @@ The tutorials listed here introduce WarpII's capabilities in an instructional fo
 is intended for users to follow along.
 
 ## 1. First steps with WarpII
-[[link to tutorial](#first_steps)]
+[[link to tutorial](@ref first_steps)]
 
 Contains instructions for installation of WarpII and its dependencies, compiling from source,
 and running a simple simulation of the five-moment Euler fluid equations.
@@ -12,7 +12,7 @@ Introduces the input (`.inp`) file format and shows how to use the [ParsedFuncti
 to define initial conditions on a regular rectangular grid.
 
 ## 2. Extending WarpII with C++
-[[link to tutorial](#extension_tutorial)]
+[[link to tutorial](@ref extension_tutorial)]
 
 Introduces the C++ extension mechanism, which provides a more powerful mechanism for defining simulations
 than the input file.
