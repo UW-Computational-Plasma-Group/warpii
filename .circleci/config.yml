@@ -13,7 +13,7 @@ jobs:
           key: ccache
       - run:
           name: "Ensure ccache directory present"
-          command: mkdir -p $HOME/.ccache
+          command: mkdir -p /root/.ccache
       - run: 
           name: "Build and run tests"
           command: make test CMAKE_BUILD_PARALLEL_LEVEL=2
@@ -23,7 +23,7 @@ jobs:
       - save_cache:
           key: ccache
           paths:
-            - $HOME/.ccache
+            - /root/.ccache
 
 
 workflows:
