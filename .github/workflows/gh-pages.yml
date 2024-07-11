@@ -30,9 +30,17 @@ jobs:
     env:
       WARPIISOFT: /root
       WARPII_CMAKE_PRESET: ci-ubuntu
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          append-timestamp: false  # no need to save a separate cache entry every build, just use the most recent relevant one
+          key: ${{ github.job }}-${{ env.WARPII_CMAKE_PRESET }}-linux
+          verbose: 2 # Check if cache is working in post action
 
       - name: Install dependencies
         run: apt-get install -y doxygen
