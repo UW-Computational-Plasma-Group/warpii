@@ -1,7 +1,8 @@
 #!/bin/bash
 
-TMP=$(mktemp -d)
+set -e
 
+TMP=$(mktemp -d)
 
 ./warpii --print-parameters ../../examples/five-moment/shu_osher_shock_1d.inp 
 
