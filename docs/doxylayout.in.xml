@@ -8,7 +8,8 @@
     <tab type="usergroup" visible="yes" url="@ref howto" title="How-to guides">
     </tab>
     <tab type="usergroup" visible="yes" url="@ref reference" title="Reference">
-        <tab type="user" visible="yes" url="@ref five_moment_params" title="Five-Moment Application Parameters"/>
+        <tab type="user" visible="yes" url="@ref five_moment_params" title="Five-Moment Application"/>
+        <tab type="user" visible="yes" url="@ref phmaxwell_params" title="Perfectly-Hyperbolic Maxwell Application"/>
     </tab>
     <tab type="usergroup" visible="yes" title="Explanation">
         <tab type="user" visible="yes" url="@ref esdgsem" title="The entropy-stable Discontinuous Galerkin spectral element method"/>
