@@ -149,7 +149,8 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
 
     double gas_gamma = prm.get_double("gas_gamma");
 
-    PlasmaNormalization plasma_norm = PlasmaNormalization::create_from_parameters(prm);
+    const PlasmaNormalization plasma_norm = 
+        PlasmaNormalization::create_from_parameters(prm);
 
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {
@@ -180,7 +181,8 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
         grid, n_components, fe_degree);
 
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
-        discretization, species, fields, gas_gamma, t_end, n_boundaries, fields_enabled);
+        discretization, species, fields, plasma_norm, gas_gamma, 
+        t_end, n_boundaries, fields_enabled);
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,
                                                     grid, std::move(dg_solver),

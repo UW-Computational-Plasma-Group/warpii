@@ -15,6 +15,7 @@ set(TEST_SOURCES
     euler_test.cc
     conservation_test.cc
     dof_utils_test.cc
+    plasma_waves_test.cc
     shock_capturing_fv_test.cc
     utilities_test.cc
     phmaxwell_test.cc

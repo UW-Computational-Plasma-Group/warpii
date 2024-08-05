@@ -12,6 +12,7 @@
     </tab>
     <tab type="usergroup" visible="yes" title="Explanation">
         <tab type="user" visible="yes" url="@ref esdgsem" title="The entropy-stable Discontinuous Galerkin spectral element method"/>
+        <tab type="user" visible="yes" url="@ref locally_implicit" title="Locally-implicit source terms for five-moment Maxwell systems"/>
     </tab>
     
 
