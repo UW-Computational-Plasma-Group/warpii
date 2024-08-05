@@ -17,14 +17,25 @@ add_custom_target(copy-docs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${docs_src_dir} ${docs_dest_dir}
     COMMENT "Copying docs/ directory to build tree")
 
-add_custom_target(doxygen
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/html/index.html
     COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+    DEPENDS ${DOXYGEN_EXECUTABLE} ${doxyfile} ${docs_src_dir}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating documentation with Doxygen"
     VERBATIM)
 
-add_dependencies(doxygen copy-docs copy-readme)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/param_doc_pages
+    COMMAND ${docs_dest_dir}/scripts/build_params_doc_pages.sh
+    DEPENDS ${DOXYGEN_EXECUTABLE} ${doxyfile} ${docs_src_dir} ${docs_src_dir}/scripts/build_params_doc_pages.sh ${CMAKE_CURRENT_BINARY_DIR}/html/index.html
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating param doc pages"
+    VERBATIM)
+
+add_custom_target(documentation
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/param_doc_pages ${CMAKE_CURRENT_BINARY_DIR}/html/index.html)
+
+add_dependencies(documentation copy-docs copy-readme)
 
 add_test(
     NAME DoxygenTest
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target doxygen)
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target documentation)
