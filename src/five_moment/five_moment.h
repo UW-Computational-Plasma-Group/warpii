@@ -240,7 +240,7 @@ void FiveMomentApp<dim>::run(WarpiiOpts) {
 
 template <int dim>
 void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
-    FiveMomentPostprocessor<dim> postprocessor(gas_gamma);
+    FiveMomentPostprocessor<dim> postprocessor(gas_gamma, species, fields_enabled);
     if (!write_output) {
         return;
     }
@@ -276,13 +276,17 @@ void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
                 DataComponentInterpretation::component_is_scalar);
         }
         if (fields_enabled) {
+            names.emplace_back("E_x");
+            names.emplace_back("E_y");
+            names.emplace_back("E_z");
             for (unsigned int d = 0; d < 3; ++d) {
-                names.emplace_back("E_field");
                 interpretation.push_back(
                     DataComponentInterpretation::component_is_scalar);
             }
+            names.emplace_back("B_x");
+            names.emplace_back("B_y");
+            names.emplace_back("B_z");
             for (unsigned int d = 0; d < 3; ++d) {
-                names.emplace_back("B_field");
                 interpretation.push_back(
                     DataComponentInterpretation::component_is_scalar);
             }
