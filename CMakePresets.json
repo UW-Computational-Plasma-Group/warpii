@@ -43,7 +43,7 @@
       "binaryDir": "${sourceDir}/builds/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror",
+        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror -fsanitize=undefined",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "WARPII_DOC_BUILD": "TRUE",
