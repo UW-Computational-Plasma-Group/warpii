@@ -18,7 +18,7 @@ template <int dim>
 class FiveMomentSourceOperator {
     public:
     FiveMomentSourceOperator(
-            const PlasmaNormalization& plasma_norm,
+            PlasmaNormalization plasma_norm,
             std::vector<std::shared_ptr<Species<dim>>> species,
             std::shared_ptr<NodalDGDiscretization<dim>> discretization,
             bool fields_enabled):
@@ -43,7 +43,7 @@ class FiveMomentSourceOperator {
            const std::pair<unsigned int, unsigned int> &cell_range) const;
 
    private:
-     const PlasmaNormalization& plasma_norm;
+     PlasmaNormalization plasma_norm;
      double dt;
      LinearAlgebra::distributed::Vector<double> soln_register;
      std::vector<std::shared_ptr<Species<dim>>> species;

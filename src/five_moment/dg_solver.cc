@@ -17,6 +17,11 @@ void FiveMomentDGSolver<dim>::project_initial_condition() {
         solution_helper.project_fluid_quantities(
             *species.at(i)->initial_condition, solution.mesh_sol, i);
     }
+    if (fields_enabled) {
+        solution_helper.project_field_quantities(
+                *fields->get_initial_condition().func,
+                solution.mesh_sol);
+    }
 }
 
 template <int dim>

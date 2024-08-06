@@ -5,6 +5,8 @@
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/matrix_free/matrix_free.h>
 
+#include "../utilities.h"
+
 using namespace dealii;
 
 namespace warpii {
@@ -18,19 +20,15 @@ void FiveMomentSourceOperator<dim>::reinit(
 
 template <int dim>
 void FiveMomentSourceOperator<dim>::evolve_one_time_step(
-    LinearAlgebra::distributed::Vector<double> &solution,
-    const double dt) {
+    LinearAlgebra::distributed::Vector<double> &solution, const double dt) {
     this->dt = dt;
 
     if (fields_enabled) {
         discretization->mf.cell_loop(
-                &FiveMomentSourceOperator<dim>::local_apply_cell,
-                this,
-                solution,
-                solution);
+            &FiveMomentSourceOperator<dim>::local_apply_cell, this, solution,
+            solution);
     }
 }
-
 
 template <int dim>
 void FiveMomentSourceOperator<dim>::local_apply_cell(
@@ -46,11 +44,16 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
         species_evals.emplace_back(mf, 0, 0, 5 * i);
     }
     FEEvaluation<dim, -1, 0, 8, double> fields_eval(mf, 0, 0, 5 * n_species);
+    AssertThrow(species_evals[0].dofs_per_component == fields_eval.dofs_per_component,
+            ExcMessage("DOFs per component do not match"));
 
     LAPACKFullMatrix<double> M(3 * n_species + 3);
-    M.reset_values();
+    LAPACKFullMatrix<double> L(3 * n_species + 3);
+    L.reset_values();
 
     FullMatrix<double> IxB(3);
+
+    SHOW(plasma_norm.omega_p_tau);
 
     FullMatrix<double> omega_p_tau_scaling(3);
     for (unsigned int i = 0; i < 3; i++) {
@@ -59,11 +62,10 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
     }
     // Populate constant parts of the local matrix
     for (unsigned int i = 0; i < n_species; i++) {
-        M.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -dt / 2.0 * -1.0);
+        L.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -1.0);
         const double Z_i = species[i]->charge;
         const double A_i = species[i]->mass;
-        M.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0,
-               -dt / 2.0 * Z_i * Z_i / A_i);
+        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i * Z_i / A_i);
     }
 
     Vector<double> RHS(3 * n_species + 3);
@@ -80,17 +82,17 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
 
         for (unsigned int dof = 0; dof < fields_eval.dofs_per_component;
              dof++) {
-            Tensor<1, 8, VectorizedArray<double>> fields_soln =
-                fields_eval.get_dof_value(dof);
-            std::vector<Tensor<1, 5, VectorizedArray<double>>> fluids_soln;
+            auto field_vals = fields_eval.get_dof_value(dof);
+
+            Tensor<1, 3, VectorizedArray<double>> E_n_plus_1_2;
+            std::vector<Tensor<1, 3, VectorizedArray<double>>> rhou_n_plus_1_2;
             for (unsigned int i = 0; i < n_species; i++) {
-                fluids_soln.push_back(species_evals[i].get_dof_value(dof));
+                rhou_n_plus_1_2.emplace_back();
             }
 
             for (unsigned int lane = 0; lane < VectorizedArray<double>::size();
                  lane++) {
                 // Construct spatially varying entries of matrix
-                const auto field_vals = fields_eval.get_dof_value(dof);
                 const double B_x = field_vals[3][lane];
                 const double B_y = field_vals[4][lane];
                 const double B_z = field_vals[5][lane];
@@ -104,13 +106,17 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
                 for (unsigned int i = 0; i < n_species; i++) {
                     const double Z_i = species[i]->charge;
                     const double A_i = species[i]->mass;
-                    M.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
-                           -dt / 2.0 * omega_c_tau * Z_i * Z_i / A_i);
+                    L.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
+                           omega_c_tau * Z_i * Z_i / A_i);
                 }
 
+                M.reinit(3 * n_species + 3);
                 for (unsigned int i = 0; i < 3 * n_species + 3; i++) {
                     M(i, i) += 1.0;
                 }
+                M.add(-dt / 2.0, L);
+                std::cout << "M: " << std::endl;
+                M.print_formatted(std::cout);
                 M.compute_lu_factorization();
 
                 // Form Vector that contains the RHS
@@ -128,21 +134,41 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
                         RHS(3 + 3 * i + d) = j_i_d;
                     }
                 }
+                std::cout << "RHS: " << std::endl;
+                RHS.print(std::cout);
 
                 M.solve(RHS);
                 auto &LHS = RHS;
 
-                // Write solution to dst
                 for (unsigned int d = 0; d < 3; d++) {
-                    fields_soln[d][lane] = LHS(d);
+                    E_n_plus_1_2[d][lane] = LHS(d);
                     for (unsigned int i = 0; i < n_species; i++) {
-                        fluids_soln[i][d + 1][lane] = LHS(3 + 3 * i + d);
+                        const double Z_i = species[i]->charge;
+                        const double A_i = species[i]->mass;
+                        rhou_n_plus_1_2[i][d][lane] = A_i / Z_i * LHS(3 + 3 * i + d);
                     }
                 }
             }
-            fields_eval.submit_dof_value(fields_soln, dof);
+
+            field_vals = fields_eval.get_dof_value(dof);
+            for (unsigned int d = 0; d < 3; d++) {
+                field_vals[d] = 2.0 * E_n_plus_1_2[d] - field_vals[d];
+            }
+            fields_eval.submit_dof_value(field_vals, dof);
+
             for (unsigned int i = 0; i < n_species; i++) {
-                species_evals[i].submit_dof_value(fluids_soln[i], dof);
+                SHOW(dof);
+                auto species_vals = species_evals[i].get_dof_value(dof);
+                VectorizedArray<double> old_KE = VectorizedArray(0.0);
+                VectorizedArray<double> new_KE = VectorizedArray(0.0);
+                for (unsigned int d = 0; d < 3; d++) {
+                    old_KE += 0.5 * species_vals[d+1] * species_vals[d+1] / species_vals[0];
+                    species_vals[d+1] = 2.0 * rhou_n_plus_1_2[i][d] - species_vals[d+1];
+                    new_KE += 0.5 * species_vals[d+1] * species_vals[d+1] / species_vals[0];
+                }
+                VectorizedArray<double> internal_energy = species_vals[4] - old_KE;
+                species_vals[4] = internal_energy + new_KE;
+                species_evals[i].submit_dof_value(species_vals, dof);
             }
         }
 

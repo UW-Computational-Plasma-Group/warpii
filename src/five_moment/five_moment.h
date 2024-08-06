@@ -151,6 +151,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
 
     const PlasmaNormalization plasma_norm = 
         PlasmaNormalization::create_from_parameters(prm);
+    SHOW(plasma_norm.omega_p_tau);
 
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {

@@ -1,0 +1,34 @@
+set Application = FiveMoment
+set n_dims = 1
+set t_end = 10.0
+
+set write_output = true
+set n_writeout_frames = 100
+
+set fe_degree = 1
+
+set fields_enabled = true
+
+subsection geometry
+    set left = 0.0
+    set right = 1.0
+    set nx = 1
+end
+
+subsection PHMaxwellFields
+    subsection InitialCondition
+        set components = 0; 1.0; 0; \
+                         0; 0; 0; \
+                         0; 0
+    end
+end
+
+subsection Species_0
+    set name = electron
+    set charge = -1.0
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1.0; 0.0; 0.0; 0.0; 1.0
+    end
+end
+

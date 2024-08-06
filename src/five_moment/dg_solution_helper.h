@@ -22,13 +22,20 @@ namespace five_moment {
 template <int dim>
 class FiveMomentDGSolutionHelper {
    public:
-    FiveMomentDGSolutionHelper(std::shared_ptr<NodalDGDiscretization<dim>> discretization):
+    FiveMomentDGSolutionHelper(
+            unsigned int n_species,
+            std::shared_ptr<NodalDGDiscretization<dim>> discretization):
+        n_species(n_species),
         discretization(discretization) {}
 
     void project_fluid_quantities(
         const Function<dim> &function,
         LinearAlgebra::distributed::Vector<double> &solution,
         unsigned int species_index) const;
+
+    void project_field_quantities(
+        const Function<dim> &function,
+        LinearAlgebra::distributed::Vector<double> &solution) const;
 
     /**
      * Compute the L^2 norm of the difference between `solution` and `f`,
@@ -47,6 +54,7 @@ class FiveMomentDGSolutionHelper {
         unsigned int species_index);
 
    private:
+    unsigned int n_species;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
 };
 
