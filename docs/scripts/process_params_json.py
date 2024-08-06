@@ -105,7 +105,7 @@ def is_subsection(obj):
 ## Printing out param documentation
 
 def print_single_param_docs(depth, name, param):
-    if name == 'section_documentation':
+    if name == 'section_documentation' or name == 'Application':
         return
 
     documentation = process_documentation_markdown(param["documentation"])
