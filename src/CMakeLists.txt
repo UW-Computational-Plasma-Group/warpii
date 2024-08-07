@@ -11,6 +11,7 @@ add_library(libwarpii
     five_moment/dg_solver.cc
     five_moment/five_moment.cc
     five_moment/flux_operator.cc
+    five_moment/source_operator.cc
     five_moment/solution_vec.cc
     five_moment/species.cc
     five_moment/species_func.cc

@@ -48,6 +48,31 @@ void FiveMomentDGSolutionHelper<dim>::project_fluid_quantities(
 }
 
 template <int dim>
+void FiveMomentDGSolutionHelper<dim>::project_field_quantities(
+    const Function<dim> &function,
+    LinearAlgebra::distributed::Vector<double> &solution) const {
+    const auto& mf = discretization->mf;
+
+    unsigned int first_component = n_species * 5;
+    FEEvaluation<dim, -1, 0, 8, double> phi(mf, 0, 1, first_component);
+    MatrixFreeOperators::CellwiseInverseMassMatrix<dim, -1, 8, double>
+        inverse(phi);
+
+    solution.zero_out_ghost_values();
+    for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
+        phi.reinit(cell);
+        for (const unsigned int q : phi.quadrature_point_indices()) {
+            auto value = evaluate_function<dim, double, 8>(
+                                     function, phi.quadrature_point(q));
+            phi.submit_dof_value(value, q);
+        }
+        inverse.transform_from_q_points_to_basis(
+            8, phi.begin_dof_values(), phi.begin_dof_values());
+        phi.set_dof_values(solution);
+    }
+}
+
+template <int dim>
 double FiveMomentDGSolutionHelper<dim>::compute_global_error(
     LinearAlgebra::distributed::Vector<double>& solution, 
     Function<dim>& f,

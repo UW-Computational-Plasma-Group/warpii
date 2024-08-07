@@ -1,6 +1,7 @@
 #pragma once
 
 #include "euler.h"
+#include "species.h"
 #include <deal.II/numerics/data_out.h>
 
 #include <cmath>
@@ -12,7 +13,10 @@ using namespace dealii;
 template <int dim>
 class FiveMomentPostprocessor : public DataPostprocessor<dim> {
    public:
-    FiveMomentPostprocessor(double gamma) : gamma(gamma) {}
+    FiveMomentPostprocessor(double gamma,
+            std::vector<std::shared_ptr<Species<dim>>> species, 
+            bool fields_enabled) : gamma(gamma),
+    species(species), fields_enabled(fields_enabled) {}
 
     virtual void evaluate_vector_field(
         const DataPostprocessorInputs::Vector<dim> &inputs,
@@ -28,6 +32,8 @@ class FiveMomentPostprocessor : public DataPostprocessor<dim> {
 
    private:
     double gamma;
+    std::vector<std::shared_ptr<Species<dim>>> species;
+    bool fields_enabled;
 };
 
 template <int dim>
@@ -39,8 +45,9 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
 
     Assert(computed_quantities.size() == n_evaluation_points,
            ExcInternalError());
-    Assert(inputs.solution_values[0].size() == 5, ExcInternalError());
-    Assert(computed_quantities[0].size() == 6, ExcInternalError());
+    Assert(inputs.solution_values[0].size() == 5 * species.size() + (fields_enabled ? 8 : 0), 
+            ExcInternalError());
+    Assert(computed_quantities[0].size() == 6 * species.size(), ExcInternalError());
 
     for (unsigned int p = 0; p < n_evaluation_points; ++p) {
         Tensor<1, 5, double> solution;
@@ -64,12 +71,14 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
 template <int dim>
 std::vector<std::string> FiveMomentPostprocessor<dim>::get_names() const {
     std::vector<std::string> names;
-    names.emplace_back("x_velocity");
-    names.emplace_back("y_velocity");
-    names.emplace_back("z_velocity");
-    names.emplace_back("pressure");
-    names.emplace_back("specific_entropy");
-    names.emplace_back("speed_of_sound");
+    for (auto& sp : species) {
+        names.emplace_back(sp->name + "_x_velocity");
+        names.emplace_back(sp->name + "_y_velocity");
+        names.emplace_back(sp->name + "_z_velocity");
+        names.emplace_back(sp->name + "_pressure");
+        names.emplace_back(sp->name + "_specific_entropy");
+        names.emplace_back(sp->name + "_speed_of_sound");
+    }
 
     return names;
 }
@@ -84,19 +93,21 @@ std::vector<DataComponentInterpretation::DataComponentInterpretation>
 FiveMomentPostprocessor<dim>::get_data_component_interpretation() const {
     std::vector<DataComponentInterpretation::DataComponentInterpretation>
         interpretation;
-    // velocity
-    for (unsigned int d = 0; d < 3; ++d)
-        interpretation.push_back(
-            DataComponentInterpretation::component_is_scalar);
+    for (unsigned int i = 0; i < species.size(); i++) {
+        // velocity
+        for (unsigned int d = 0; d < 3; ++d)
+            interpretation.push_back(
+                DataComponentInterpretation::component_is_scalar);
 
-    // pressure
-    interpretation.push_back(DataComponentInterpretation::component_is_scalar);
+        // pressure
+        interpretation.push_back(DataComponentInterpretation::component_is_scalar);
 
-    // entropy
-    interpretation.push_back(DataComponentInterpretation::component_is_scalar);
+        // entropy
+        interpretation.push_back(DataComponentInterpretation::component_is_scalar);
 
-    // speed of sound
-    interpretation.push_back(DataComponentInterpretation::component_is_scalar);
+        // speed of sound
+        interpretation.push_back(DataComponentInterpretation::component_is_scalar);
+    }
 
     return interpretation;
 }

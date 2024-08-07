@@ -17,12 +17,18 @@ void FiveMomentDGSolver<dim>::project_initial_condition() {
         solution_helper.project_fluid_quantities(
             *species.at(i)->initial_condition, solution.mesh_sol, i);
     }
+    if (fields_enabled) {
+        solution_helper.project_field_quantities(
+                *fields->get_initial_condition().func,
+                solution.mesh_sol);
+    }
 }
 
 template <int dim>
 void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback) {
     auto step = [&](double t, double dt) -> bool {
         ssp_integrator.evolve_one_time_step(flux_operator, solution, dt, t);
+        source_operator.evolve_one_time_step(solution.mesh_sol, dt);
 
         std::cout << "t = " << t << std::endl;
         return true;
