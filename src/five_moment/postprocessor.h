@@ -45,8 +45,8 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
 
     Assert(computed_quantities.size() == n_evaluation_points,
            ExcInternalError());
-    unsigned int n_components = 5 * species.size() + (fields_enabled ? 8 : 0);
-    Assert(inputs.solution_values[0].size() == n_components, ExcInternalError());
+    Assert(inputs.solution_values[0].size() == 5 * species.size() + (fields_enabled ? 8 : 0), 
+            ExcInternalError());
     Assert(computed_quantities[0].size() == 6 * species.size(), ExcInternalError());
 
     for (unsigned int p = 0; p < n_evaluation_points; ++p) {
