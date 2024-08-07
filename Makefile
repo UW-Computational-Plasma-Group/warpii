@@ -55,13 +55,10 @@ warn-env-vars:
 $(WARPIISOFT):
 	mkdir -p $(WARPIISOFT)
 
-# Need to touch CMakeCache.txt in the case that nothing in it changed, to avoid rebuilding next time
-builds/$(WARPII_CMAKE_PRESET)/configured: check-env CMakePresets.json CMakeLists.txt
-	rm -rf builds/$(WARPII_CMAKE_PRESET)/configured \
-		&& cmake --preset $(WARPII_CMAKE_PRESET) \
-		&& touch builds/$(WARPII_CMAKE_PRESET)/configured
+builds/$(WARPII_CMAKE_PRESET)/CMakeFiles: check-env CMakePresets.json CMakeLists.txt cmake
+	cmake --preset $(WARPII_CMAKE_PRESET)
 
-build: check-env src codes builds/$(WARPII_CMAKE_PRESET)/configured
+build: check-env src codes builds/$(WARPII_CMAKE_PRESET)/CMakeFiles
 	source warpii.env && cmake --build --preset $(WARPII_CMAKE_PRESET) --parallel $(CMAKE_BUILD_PARALLEL_LEVEL)
 
 test: check-env build doc
