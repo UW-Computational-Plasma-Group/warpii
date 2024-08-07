@@ -106,7 +106,7 @@ void create_and_move_to_subdir(const std::string subdir) {
             std::cerr << "mkdir() error: " << strerror(errno) << std::endl;
             exit(1);
         } else {
-            std::cout << "Directory created: " << new_dir << std::endl;
+            std::cerr << "Directory created: " << new_dir << std::endl;
         }
     } else if (!(info.st_mode & S_IFDIR)) {
         std::cerr << "Error: " << new_dir << " is not a directory." << std::endl;
