@@ -249,6 +249,7 @@ void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
 
     DataOutBase::VtkFlags flags;
     flags.write_higher_order_cells = false;
+    flags.compression_level = DataOutBase::CompressionLevel::best_compression;
     data_out.set_flags(flags);
 
     auto& sol = get_solution();

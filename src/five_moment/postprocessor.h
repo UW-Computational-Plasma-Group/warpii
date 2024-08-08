@@ -50,21 +50,23 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
     Assert(computed_quantities[0].size() == 6 * species.size(), ExcInternalError());
 
     for (unsigned int p = 0; p < n_evaluation_points; ++p) {
-        Tensor<1, 5, double> solution;
-        for (unsigned int comp = 0; comp < 5; ++comp) {
-            solution[comp] = inputs.solution_values[p](comp);
-        }
-        auto density = solution[0];
-        const Tensor<1, 3> velocity = euler_velocity<3, double>(solution);
-        double pressure = euler_pressure<dim, double>(solution, gamma);
+        for (unsigned int i = 0; i < species.size(); i++) {
+            Tensor<1, 5, double> solution;
+            for (unsigned int comp = 0; comp < 5; ++comp) {
+                solution[comp] = inputs.solution_values[p](comp + 5*i);
+            }
+            auto density = solution[0];
+            const Tensor<1, 3> velocity = euler_velocity<3, double>(solution);
+            double pressure = euler_pressure<dim, double>(solution, gamma);
 
-        for (unsigned int d = 0; d < 3; ++d) {
-            computed_quantities[p](d) = velocity[d];
+            for (unsigned int d = 0; d < 3; ++d) {
+                computed_quantities[p](d + 5*i) = velocity[d];
+            }
+            computed_quantities[p](3 + 5*i) = pressure;
+            computed_quantities[p](4 + 5*i) =
+                std::log(pressure) - gamma * std::log(density);
+            computed_quantities[p](5 + 5*i) = std::sqrt(gamma * pressure / density);
         }
-        computed_quantities[p](3) = pressure;
-        computed_quantities[p](4) =
-            std::log(pressure) - gamma * std::log(density);
-        computed_quantities[p](5) = std::sqrt(gamma * pressure / density);
     }
 }
 

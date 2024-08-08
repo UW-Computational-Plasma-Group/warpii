@@ -22,8 +22,8 @@ We present the equation for the case of two species for notational simplicity:
 =
 \begin{pmatrix}
 0 & -\omega_p \tau & -\omega_p \tau \\
-\frac{Z_1^2}{A_1}\omega_p \tau & \frac{Z_1}{A_1}\omega_c \tau \mathbb{I} \times \mathbf{B} & 0 \\
-\frac{Z_2^2}{A_2}\omega_p \tau & 0 & \frac{Z_2}{A_2}\omega_c \tau \mathbb{I} \times \mathbf{B}
+\frac{Z_1}{A_1}\omega_p \tau & \frac{Z_1}{A_1}\omega_c \tau \mathbb{I} \times \mathbf{B} & 0 \\
+\frac{Z_2}{A_2}\omega_p \tau & 0 & \frac{Z_2}{A_2}\omega_c \tau \mathbb{I} \times \mathbf{B}
 \end{pmatrix}
 \begin{pmatrix}
 \mathbf{E} \\
