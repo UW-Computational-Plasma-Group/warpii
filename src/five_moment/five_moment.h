@@ -181,7 +181,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
         grid, n_components, fe_degree);
 
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
-        discretization, species, fields, plasma_norm, gas_gamma, 
+        ext, discretization, species, fields, plasma_norm, gas_gamma, 
         t_end, n_boundaries, fields_enabled);
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,

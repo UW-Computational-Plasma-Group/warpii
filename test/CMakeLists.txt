@@ -19,6 +19,7 @@ set(TEST_SOURCES
     shock_capturing_fv_test.cc
     utilities_test.cc
     phmaxwell_test.cc
+    bc_extension_test.cc
     # Add more test files here as needed
 )
 

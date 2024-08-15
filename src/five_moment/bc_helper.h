@@ -16,11 +16,15 @@ class EulerBCMap {
     void set_axial_boundary(const types::boundary_id boundary_id);
     void set_wall_boundary(const types::boundary_id boundary_id);
 
+    void set_extension_boundary(const types::boundary_id boundary_id);
+
     bool is_inflow(const types::boundary_id boundary_id) const;
     bool is_subsonic_outflow(const types::boundary_id boundary_id) const;
     bool is_supersonic_outflow(const types::boundary_id boundary_id) const;
     bool is_axial(const types::boundary_id boundary_id) const;
     bool is_wall(const types::boundary_id boundary_id) const;
+
+    bool is_extension_bc(const types::boundary_id boundary_id) const;
 
     std::shared_ptr<Function<dim>> get_inflow(const types::boundary_id boundary_id) const {
         return _inflow_boundaries.find(boundary_id)->second;
@@ -43,6 +47,7 @@ class EulerBCMap {
     std::set<types::boundary_id> supersonic_outflow_boundaries;
     std::set<types::boundary_id> axial_boundaries;
     std::set<types::boundary_id> wall_boundaries;
+    std::set<types::boundary_id> extension_boundaries;
 
     // Helper set of the boundary ids that are already spoken for.
     std::set<types::boundary_id> set_boundary_ids;
@@ -119,6 +124,19 @@ void EulerBCMap<dim>::set_wall_boundary(
 }
 
 template <int dim>
+void EulerBCMap<dim>::set_extension_boundary(
+    const types::boundary_id boundary_id) {
+    AssertThrow(set_boundary_ids.find(boundary_id) == set_boundary_ids.end(),
+                ExcMessage("You already set the boundary with id " +
+                           std::to_string(static_cast<int>(boundary_id)) +
+                           " to another type of boundary before now setting " +
+                           "it as an extension boundary"));
+
+    set_boundary_ids.insert(boundary_id);
+    extension_boundaries.insert(boundary_id);
+}
+
+template <int dim>
 bool EulerBCMap<dim>::is_inflow(const types::boundary_id boundary_id) const {
     return _inflow_boundaries.find(boundary_id) != _inflow_boundaries.end();
 }
@@ -137,4 +155,8 @@ bool EulerBCMap<dim>::is_axial(const types::boundary_id boundary_id) const {
 template <int dim>
 bool EulerBCMap<dim>::is_wall(const types::boundary_id boundary_id) const {
     return wall_boundaries.find(boundary_id) != wall_boundaries.end();
+}
+template <int dim>
+bool EulerBCMap<dim>::is_extension_bc(const types::boundary_id boundary_id) const {
+    return extension_boundaries.find(boundary_id) != extension_boundaries.end();
 }
