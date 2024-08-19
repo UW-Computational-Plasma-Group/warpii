@@ -63,7 +63,7 @@ build: check-env src codes builds/$(WARPII_CMAKE_PRESET)/CMakeFiles
 
 test: check-env build doc
 	cd builds/$(WARPII_CMAKE_PRESET) \
-		&& ctest --output-on-failure -R $(WARPII_TEST_FILTER)
+		&& ctest --output-on-failure
 
 .PHONY: install-dealii
 install-dealii: $(WARPIISOFT)
