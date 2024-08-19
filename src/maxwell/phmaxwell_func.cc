@@ -13,9 +13,7 @@ template <int dim>
 void PHMaxwellFunc<dim>::declare_parameters(ParameterHandler& prm) {
     prm.declare_entry(
         "components",
-        R"(0; 0; 0; \
-0; 0; 0; \
-0; 0)",
+        R"(0; 0; 0; 0; 0; 0; 0; 0)",
         Patterns::Anything(),
         R"(Expressions for the components of the perfectly-hyperbolic Maxwell system. These must be supplied in the following order:
 ```

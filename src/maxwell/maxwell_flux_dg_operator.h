@@ -223,8 +223,8 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             VA phi_m;
             VA psi_m;
             for (unsigned int d = 0; d < 3; d++) {
-                E_m = val_m[d];
-                B_m = val_m[d+3];
+                E_m[d] = val_m[d];
+                B_m[d] = val_m[d+3];
             }
             phi_m = val_m[6];
             psi_m = val_m[7];

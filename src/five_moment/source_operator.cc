@@ -53,8 +53,6 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
 
     FullMatrix<double> IxB(3);
 
-    SHOW(plasma_norm.omega_p_tau);
-
     FullMatrix<double> omega_p_tau_scaling(3);
     for (unsigned int i = 0; i < 3; i++) {
         omega_p_tau_scaling(i, i) = plasma_norm.omega_p_tau;
@@ -65,7 +63,7 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
         L.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -1.0);
         const double Z_i = species[i]->charge;
         const double A_i = species[i]->mass;
-        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i * Z_i / A_i);
+        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i / A_i);
     }
 
     Vector<double> RHS(3 * n_species + 3);
@@ -107,7 +105,7 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
                     const double Z_i = species[i]->charge;
                     const double A_i = species[i]->mass;
                     L.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
-                           omega_c_tau * Z_i * Z_i / A_i);
+                           omega_c_tau * Z_i / A_i);
                 }
 
                 M.reinit(3 * n_species + 3);
@@ -115,8 +113,6 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
                     M(i, i) += 1.0;
                 }
                 M.add(-dt / 2.0, L);
-                std::cout << "M: " << std::endl;
-                M.print_formatted(std::cout);
                 M.compute_lu_factorization();
 
                 // Form Vector that contains the RHS
@@ -134,8 +130,6 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
                         RHS(3 + 3 * i + d) = j_i_d;
                     }
                 }
-                std::cout << "RHS: " << std::endl;
-                RHS.print(std::cout);
 
                 M.solve(RHS);
                 auto &LHS = RHS;
@@ -157,7 +151,6 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
             fields_eval.submit_dof_value(field_vals, dof);
 
             for (unsigned int i = 0; i < n_species; i++) {
-                SHOW(dof);
                 auto species_vals = species_evals[i].get_dof_value(dof);
                 VectorizedArray<double> old_KE = VectorizedArray(0.0);
                 VectorizedArray<double> new_KE = VectorizedArray(0.0);
