@@ -9,11 +9,13 @@ using namespace dealii;
 
 namespace warpii {
 
+    const std::string PHMAXWELL_FUNC_DEFAULT = R"(0; 0; 0; 0; 0; 0; 0; 0)";
+
 template <int dim>
 void PHMaxwellFunc<dim>::declare_parameters(ParameterHandler& prm) {
     prm.declare_entry(
         "components",
-        R"(0; 0; 0; 0; 0; 0; 0; 0)",
+        PHMAXWELL_FUNC_DEFAULT,
         Patterns::Anything(),
         R"(Expressions for the components of the perfectly-hyperbolic Maxwell system. These must be supplied in the following order:
 ```
@@ -68,7 +70,9 @@ PHMaxwellFunc<dim> PHMaxwellFunc<dim>::create_from_parameters(
     std::shared_ptr<FunctionParser<dim>> func = std::make_shared<FunctionParser<dim>>(8);
     func->initialize(vnames, expression, constants, true);
 
-    return PHMaxwellFunc(func);
+    const bool is_zero = (expression == PHMAXWELL_FUNC_DEFAULT);
+
+    return PHMaxwellFunc(func, is_zero);
 }
 
 template class PHMaxwellFunc<1>;
