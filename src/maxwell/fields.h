@@ -1,6 +1,7 @@
 #pragma once
 #include "../normalization.h"
 #include <deal.II/base/parameter_handler.h>
+#include <deal.II/lac/lapack_support.h>
 #include "maxwell.h"
 #include "bc_map.h"
 #include "phmaxwell_func.h"
@@ -13,12 +14,14 @@ class PHMaxwellFields {
     PHMaxwellFields(double phmaxwell_gamma, double phmaxwell_chi,
            PlasmaNormalization plasma_norm,
            PHMaxwellFunc<dim> initial_condition,
+           PHMaxwellFunc<dim> general_source_term,
            MaxwellBCMap<dim> bc_map
            )
         : phmaxwell_gamma(phmaxwell_gamma),
           phmaxwell_chi(phmaxwell_chi),
           plasma_norm(plasma_norm),
           initial_condition(initial_condition),
+          general_source_term(general_source_term),
           bc_map(bc_map)
     {}
 
@@ -42,11 +45,16 @@ class PHMaxwellFields {
         return initial_condition;
     }
 
+    const PHMaxwellFunc<dim>& get_general_source_term() {
+        return general_source_term;
+    }
+
    private:
     double phmaxwell_gamma;
     double phmaxwell_chi;
     PlasmaNormalization plasma_norm;
     PHMaxwellFunc<dim> initial_condition;
+    PHMaxwellFunc<dim> general_source_term;
     MaxwellBCMap<dim> bc_map;
 };
 

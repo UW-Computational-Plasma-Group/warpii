@@ -23,12 +23,15 @@ class Species {
    public:
     Species(std::string name, double charge, double mass,
             EulerBCMap<dim> bc_map, 
-            std::unique_ptr<SpeciesFunc<dim>> initial_condition)
+            std::unique_ptr<SpeciesFunc<dim>> initial_condition,
+            std::unique_ptr<SpeciesFunc<dim>> general_source_term)
         : name(name),
           charge(charge),
           mass(mass),
           bc_map(bc_map),
-          initial_condition(std::move(initial_condition)) {}
+          initial_condition(std::move(initial_condition)),
+          general_source_term(std::move(general_source_term))
+    {}
 
     static void declare_parameters(ParameterHandler &prm,
                                    unsigned int n_boundaries);
@@ -44,6 +47,7 @@ class Species {
     double mass;
     EulerBCMap<dim> bc_map;
     std::unique_ptr<SpeciesFunc<dim>> initial_condition;
+    std::unique_ptr<SpeciesFunc<dim>> general_source_term;
 };
 
 }  // namespace five_moment
