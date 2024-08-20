@@ -4,6 +4,7 @@
 #include "solution_vec.h"
 #include "../rk.h"
 #include "../maxwell/fields.h"
+#include "explicit_source_operator.h"
 
 using namespace dealii;
 
@@ -24,6 +25,7 @@ class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec>
                 ):
             fields_enabled(fields_enabled),
             fluid_flux(extension, discretization, gas_gamma, species, fields_enabled),
+            explicit_sources(discretization, species, fields, fields_enabled),
             maxwell_flux(discretization, 5*species.size(), fields)
         {}
 
@@ -41,6 +43,7 @@ class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec>
     private:
     bool fields_enabled;
         FluidFluxESDGSEMOperator<dim> fluid_flux;
+        FiveMomentExplicitSourceOperator<dim> explicit_sources;
         MaxwellFluxDGOperator<dim, FiveMSolutionVec> maxwell_flux;
 };
 

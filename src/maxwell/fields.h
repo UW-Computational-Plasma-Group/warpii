@@ -45,7 +45,7 @@ class PHMaxwellFields {
         return initial_condition;
     }
 
-    const PHMaxwellFunc<dim>& get_general_source_term() {
+    PHMaxwellFunc<dim>& get_general_source_term() {
         return general_source_term;
     }
 

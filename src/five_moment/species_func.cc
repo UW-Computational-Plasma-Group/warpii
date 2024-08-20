@@ -5,9 +5,7 @@
 namespace warpii {
 namespace five_moment {
 
-const std::string SPECIES_FUNC_DEFAULT = R"(0; \
-0; 0; 0; \
-0)";
+const std::string SPECIES_FUNC_DEFAULT = R"(0; 0; 0; 0; 0)";
 
 template <int dim>
 double SpeciesFunc<dim>::value(const Point<dim> &pt,
