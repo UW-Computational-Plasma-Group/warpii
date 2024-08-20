@@ -63,7 +63,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
         L.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -1.0);
         const double Z_i = species[i]->charge;
         const double A_i = species[i]->mass;
-        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i / A_i);
+        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i * Z_i / A_i);
     }
 
     Vector<double> RHS(3 * n_species + 3);
