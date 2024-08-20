@@ -22,7 +22,7 @@ void FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
 
     // dst = 1*dst2 + 0*u + c*dt*f3(u)
     //     = b*dst + a*u + c*dt*(f1(u) + f2(u) + f3(u))
-    //explicit_sources.perform_forward_euler_step(dst, u, sol_registers, dt, t, 1.0, 0.0, c);
+    explicit_sources.perform_forward_euler_step(dst, u, sol_registers, dt, t, 1.0, 0.0, c);
 }
 
 
