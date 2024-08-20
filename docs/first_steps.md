@@ -22,20 +22,24 @@ The available CMake build presets can be found in `CMakePresets.json`.
 
 ### Dependencies
 
-WarpII has two dependencies: 
+WarpII has two direct dependencies: 
 - The [deal.ii](https://dealii.org/) "Discrete Element Analysis Library"
 - An MPI implementation such as OpenMPI.
+
+On recent versions of MacOS, we have observed a compile error related to the version of
+Boost that deal.II comes bundled with, so it is best to install a recent version of boost
+to build against.
 
 **Note!**: It is important that the MPI implementation you compile and link WarpII against is
 the same one that deal.ii is compiled and linked against.
 
 The recommended dependency installation steps are as follows:
-1. Install `openmpi` via your operating system's package manager:
+1. Install `boost` and `openmpi` via your operating system's package manager:
 ```
 # Macos
-$ brew install openpmi
+$ brew install openpmi boost
 # Ubuntu
-$ apt-get install openmpi-bin libopenmpi-dev
+$ apt-get install openmpi-bin libopenmpi-dev libboost-all-dev
 ```
 2. Install deal.ii to `$WARPIISOFT/deps` using
 ```
