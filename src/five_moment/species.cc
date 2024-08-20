@@ -32,11 +32,13 @@ void Species<dim>::declare_parameters(ParameterHandler &prm,
                     "Five-moment species boundary condition specification for the boundary "
                     "`boundary_id == i`.", true);
 
-            prm.declare_entry("Type", "Wall", Patterns::Selection("Wall|Outflow|Inflow"),
+            prm.declare_entry("Type", "Wall", Patterns::Selection("Wall|Outflow|Inflow|Extension"),
                               R"(The type of boundary condition.
 - `Wall`: an impermeable wall. Normal velocity is set to zero.
 - `Outflow`: copy-out boundary condition, suitable for outflow boundaries.
-- `Inflow`: a Dirichlet boundary condition suitable for inflow boundaries. See [InflowFunction](#InflowFunction).)");
+- `Inflow`: a Dirichlet boundary condition suitable for inflow boundaries. See [InflowFunction](#InflowFunction).
+- `Extension`: the boundary condition is specified by the `boundary_flux` function of the supplied extension.
+)");
             prm.enter_subsection("InflowFunction");
             SpeciesFunc<dim>::declare_parameters(prm);
             prm.leave_subsection(); // InflowFunction
@@ -71,6 +73,8 @@ std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
                 auto inflow_func = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
                 bc_map.set_inflow_boundary(boundary_id, std::move(inflow_func));
                 prm.leave_subsection(); // InflowFunction
+            } else if (bc_type == "Extension") {
+                bc_map.set_extension_boundary(boundary_id);
             }
             prm.leave_subsection(); // BoundaryCondition_i
         }

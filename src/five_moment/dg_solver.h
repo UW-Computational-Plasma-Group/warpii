@@ -41,6 +41,7 @@ template <int dim>
 class FiveMomentDGSolver {
    public:
     FiveMomentDGSolver(
+        std::shared_ptr<five_moment::Extension<dim>> extension,
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
         std::vector<std::shared_ptr<Species<dim>>> species, 
         std::shared_ptr<PHMaxwellFields<dim>> fields,
@@ -54,8 +55,8 @@ class FiveMomentDGSolver {
           solution_helper(species.size(), discretization),
           species(species),
           fields(fields),
-          fluid_flux_operator(discretization, gas_gamma, species),
-          flux_operator(discretization, gas_gamma, species, 
+          fluid_flux_operator(extension, discretization, gas_gamma, species, fields_enabled),
+          flux_operator(extension, discretization, gas_gamma, species, 
                   fields, fields_enabled),
           source_operator(plasma_norm, species, discretization, fields_enabled),
           n_boundaries(n_boundaries),

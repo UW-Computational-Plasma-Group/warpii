@@ -13,6 +13,7 @@ template <int dim>
 class FiveMomentFluxOperator : public ForwardEulerOperator<FiveMSolutionVec> {
     public:
         FiveMomentFluxOperator(
+        std::shared_ptr<five_moment::Extension<dim>> extension,
             std::shared_ptr<NodalDGDiscretization<dim>> discretization,
             double gas_gamma, 
             std::vector<std::shared_ptr<Species<dim>>> species,
@@ -20,7 +21,7 @@ class FiveMomentFluxOperator : public ForwardEulerOperator<FiveMSolutionVec> {
             bool fields_enabled
                 ):
             fields_enabled(fields_enabled),
-            fluid_flux(discretization, gas_gamma, species),
+            fluid_flux(extension, discretization, gas_gamma, species, fields_enabled),
             maxwell_flux(discretization, 5*species.size(), fields)
         {}
 

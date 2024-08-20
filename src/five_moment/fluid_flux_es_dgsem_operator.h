@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "../dof_utils.h"
+#include "extension.h"
 #include "../utilities.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "euler.h"
@@ -48,15 +49,19 @@ template <int dim>
 class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
    public:
     FluidFluxESDGSEMOperator(
+        std::shared_ptr<five_moment::Extension<dim>> extension,
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
-        double gas_gamma, std::vector<std::shared_ptr<Species<dim>>> species)
-        : discretization(discretization),
+        double gas_gamma, std::vector<std::shared_ptr<Species<dim>>> species,
+        bool fields_enabled)
+        : extension(extension),
+          discretization(discretization),
           gas_gamma(gas_gamma),
           n_species(species.size()),
           species(species),
           split_form_volume_flux(discretization, gas_gamma),
           subcell_finite_volume_flux(*discretization, gas_gamma),
-          shock_indicator(discretization)
+          shock_indicator(discretization),
+          fields_enabled(fields_enabled)
     {
     }
 
@@ -88,6 +93,7 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         const LinearAlgebra::distributed::Vector<double> &src,
         const std::pair<unsigned int, unsigned int> &face_range) const;
 
+    template <int n_species>
     void local_apply_boundary_face(
         const MatrixFree<dim, double> &mf,
         LinearAlgebra::distributed::Vector<double> &dst,
@@ -114,6 +120,7 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         const FullMatrix<double> &Q, unsigned int d,
         VectorizedArray<double> alpha, bool log = false) const;
 
+    std::shared_ptr<five_moment::Extension<dim>> extension;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
     double gas_gamma;
     unsigned int n_species;
@@ -121,6 +128,7 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
     SplitFormVolumeFlux<dim> split_form_volume_flux;
     SubcellFiniteVolumeFlux<dim> subcell_finite_volume_flux;
     PerssonPeraireShockIndicator<dim> shock_indicator;
+    bool fields_enabled;
 };
 
 template <int dim>
@@ -174,8 +182,15 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                     const LinearAlgebra::distributed::Vector<double> &src,
                     const std::pair<unsigned int, unsigned int> &cell_range)
             -> void {
-            this->local_apply_boundary_face(mf, dst, src, cell_range,
-                                            d_dt_boundary_integrated_fluxes);
+                if (n_species == 1) {
+                    this->template local_apply_boundary_face<1>(mf, dst, src, cell_range,
+                                                    d_dt_boundary_integrated_fluxes);
+                } else if (n_species == 2) {
+                    this->template local_apply_boundary_face<2>(mf, dst, src, cell_range,
+                                                    d_dt_boundary_integrated_fluxes);
+                } else {
+                    Assert(false, ExcMessage("We have only templated up to n_species = 2."));
+                }
         };
 
         const bool zero_out_register = true;
@@ -339,29 +354,69 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_face(
     }
 }
 
+template <int dim, int n_species_static>
+std::array<FEFaceEvaluation<dim, -1, 0, 5, double>, n_species_static> construct_face_eval_array(
+        const MatrixFree<dim> &mf) {
+    if constexpr (n_species_static == 1) {
+        return {{ {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)} }};
+    } else if constexpr (n_species_static == 2) {
+        return {{
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 5)}
+        }};
+    } else if constexpr (n_species_static == 3) {
+        return {{
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 5)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 10)}
+        }};
+    } else {
+        AssertThrow(false, ExcMessage("Only supports n_species 1, 2, 3"));
+    }
+}
+
 template <int dim>
+template <int n_species_static>
 void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
     const MatrixFree<dim> &mf, LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &face_range,
     FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes)
     const {
+
+    // Set up FE evaluators
+    auto fluid_evals = construct_face_eval_array<dim, n_species_static>(mf);
+    auto E_field_eval = fields_enabled
+        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 0, 5*n_species)
+        : std::nullopt;
+    auto B_field_eval = fields_enabled
+        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 0, 5*n_species + 3)
+        : std::nullopt;
+
+    FEFaceEvaluation<dim, -1, 0, 5, double> phi_basic(mf, true, 0, 0, 0);
+
     for (unsigned int species_index = 0; species_index < n_species;
          species_index++) {
         EulerBCMap<dim> &bc_map = species.at(species_index)->bc_map;
-        unsigned int first_component = species_index * (5);
-        FEFaceEvaluation<dim, -1, 0, 5, double> phi(mf, true, 0, 0,
-                                                          first_component);
-        FEFaceEvaluation<dim, -1, 0, 5, double>
-            phi_boundary_flux_integrator(mf, true, 0, 0, first_component);
+
+        FEFaceEvaluation<dim, -1, 0, 5, double> phi(mf, true, 0, 0, 5*species_index);
+        FEFaceEvaluation<dim, -1, 0, 5, double> phi_boundary_flux_integrator(mf, true, 0, 0, 5*species_index);
 
         for (unsigned int face = face_range.first; face < face_range.second;
              ++face) {
+            const auto boundary_id = mf.get_boundary_id(face);
+
+            if (bc_map.is_extension_bc(boundary_id)) {
+                if (fields_enabled) {
+                    extension->prepare_boundary_flux_evaluators(
+                            face, species_index, src, fluid_evals, *E_field_eval, *B_field_eval);
+                } else {
+                    extension->prepare_boundary_flux_evaluators(face, species_index, src, fluid_evals);
+                }
+            }
             phi.reinit(face);
             phi.gather_evaluate(src, EvaluationFlags::values);
             phi_boundary_flux_integrator.reinit(face);
-
-            const auto boundary_id = mf.get_boundary_id(face);
 
             for (const unsigned int q : phi.quadrature_point_indices()) {
                 const Tensor<1, 5, VectorizedArray<double>> w_m =
@@ -375,7 +430,9 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                 }
 
                 // bool at_outflow = false;
+                bool compute_from_ghost = true;
                 Tensor<1, 5, VectorizedArray<double>> w_p;
+                Tensor<1, 5, VectorizedArray<double>> numerical_flux;
                 if (bc_map.is_inflow(boundary_id)) {
                     w_p = evaluate_function<dim, double, 5>(
                         *bc_map.get_inflow(boundary_id),
@@ -401,6 +458,17 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                         w_p[d + 1] = 0.0;
                     }
                     w_p[4] = w_m[4];
+                } else if (bc_map.is_extension_bc(boundary_id)) {
+                    compute_from_ghost = false;
+                    if (fields_enabled) {
+                        numerical_flux = extension->boundary_flux(
+                                boundary_id, q, species_index, 
+                                fluid_evals, *E_field_eval, *B_field_eval);
+                    } else {
+                        numerical_flux = extension->boundary_flux(
+                                boundary_id, q, species_index, 
+                                fluid_evals);
+                    }
                 } else {
                     AssertThrow(
                         false,
@@ -410,8 +478,9 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                 }
 
                 auto analytic_flux = euler_flux<dim>(w_m, gas_gamma) * normal;
-                auto numerical_flux =
-                    euler_numerical_flux<dim>(w_m, w_p, normal, gas_gamma);
+                if (compute_from_ghost) {
+                    numerical_flux = euler_numerical_flux<dim>(w_m, w_p, normal, gas_gamma);
+                }
 
                 phi.submit_value(analytic_flux - numerical_flux, q);
                 phi_boundary_flux_integrator.submit_value(numerical_flux, q);
