@@ -13,7 +13,7 @@ set write_output = true
 subsection geometry
     set left = -5.0
     set right = 5.0
-    set nx = 400
+    set nx = 200
     set periodic_dimensions =
 end
 

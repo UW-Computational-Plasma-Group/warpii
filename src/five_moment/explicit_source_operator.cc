@@ -13,16 +13,17 @@ void FiveMomentExplicitSourceOperator<dim>::perform_forward_euler_step(
         const double t, 
         const double b, const double a, const double c) {
 
-    auto Mdudt_register = sol_registers.at(0);
-    auto dudt_register = sol_registers.at(1);
+    auto& Mdudt_register = sol_registers.at(0);
+    auto& dudt_register = sol_registers.at(1);
 
     for (auto sp : species) {
         sp->general_source_term->set_time(t);
     }
 
+    const bool zero_out_register = true;
     discretization->mf.cell_loop(
             &FiveMomentExplicitSourceOperator<dim>::local_apply_cell, this,
-            Mdudt_register.mesh_sol, u.mesh_sol);
+            Mdudt_register.mesh_sol, u.mesh_sol, zero_out_register);
 
     {
         discretization->mf.cell_loop(
@@ -74,6 +75,8 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_inverse_mass_matrix(
         }
     }
 
+    SHOW(src.local_element(0));
+
     if (fields_enabled && !fields->get_general_source_term().is_zero) {
         FEEvaluation<dim, -1, 0, 8, double> phi(mf, 0, 1,
                                                       5*species.size());
@@ -84,6 +87,10 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_inverse_mass_matrix(
              ++cell) {
             phi.reinit(cell);
             phi.read_dof_values(src);
+
+            if (cell == 0) {
+                SHOW(phi.get_dof_value(0));
+            }
 
             inverse.apply(phi.begin_dof_values(), phi.begin_dof_values());
 
@@ -98,6 +105,14 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
     LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &cell_range) {
+
+    SHOW(cell_range.first);
+    SHOW(cell_range.second);
+    std::cout << "Before: " << std::endl;
+    for (unsigned int i = 0; i < dst.size(); i++) {
+        std::cout << dst.local_element(i) << ", ";
+    }
+    std::cout << std::endl;
 
     std::vector<FEEvaluation<dim, -1, 0, 5, double>> fluid_evals;
     for (unsigned int i = 0; i < species.size(); i++) {
@@ -139,26 +154,38 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
             }
 
             if (fields_enabled) {
-                auto& phi = *field_eval;
-
                 Tensor<1, 8, VectorizedArray<double>> field_source;
+                field_source = 0.0;
                 if (!fields->get_general_source_term().is_zero) {
-                    const auto p = phi.quadrature_point(q);
+                    const auto p = field_eval->quadrature_point(q);
                     field_source += evaluate_function<dim, double, 8>(*(fields->get_general_source_term().func), p);
                 }
                 const double chi = fields->phmaxwell_constants().chi;
-                field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;
-                phi.submit_value(field_source, q);
+                field_source[6] += 0.0 * chi * plasma_norm.omega_p_tau * rho_c;
+                field_eval->submit_value(field_source, q);
+
+                if (cell == 0) {
+                    SHOW(field_source);
+                    SHOW(field_eval->get_value(q));
+                }
             }
         }
+
         for (unsigned int i = 0; i < species.size(); i++) {
-            auto& phi = fluid_evals[i];
-            phi.integrate_scatter(EvaluationFlags::values, dst);
+            if (!(*species[i]->general_source_term).is_zero) {
+                auto& phi = fluid_evals[i];
+                phi.integrate_scatter(EvaluationFlags::values, dst);
+            }
         }
         if (fields_enabled) {
             field_eval->integrate_scatter(EvaluationFlags::values, dst);
         }
     }
+    std::cout << "After: " << std::endl;
+    for (unsigned int i = 0; i < dst.size(); i++) {
+        std::cout << dst.local_element(i) << ", ";
+    }
+    std::cout << std::endl;
 }
 
 template class FiveMomentExplicitSourceOperator<1>;

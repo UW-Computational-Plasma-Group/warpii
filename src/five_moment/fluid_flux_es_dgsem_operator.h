@@ -479,7 +479,7 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
 
                 auto analytic_flux = euler_flux<dim>(w_m, gas_gamma) * normal;
                 if (compute_from_ghost) {
-                    numerical_flux = euler_CH_entropy_dissipating_flux<dim>(w_m, w_p, normal, gas_gamma);
+                    numerical_flux = euler_numerical_flux<dim>(w_m, w_p, normal, gas_gamma);
                 }
 
                 phi.submit_value(analytic_flux - numerical_flux, q);
