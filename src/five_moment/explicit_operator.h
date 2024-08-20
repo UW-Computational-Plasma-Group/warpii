@@ -5,14 +5,16 @@
 #include "../rk.h"
 #include "../maxwell/fields.h"
 
+using namespace dealii;
+
 namespace warpii {
 
 namespace five_moment {
 
 template <int dim>
-class FiveMomentFluxOperator : public ForwardEulerOperator<FiveMSolutionVec> {
+class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec> {
     public:
-        FiveMomentFluxOperator(
+        FiveMomentExplicitOperator(
         std::shared_ptr<five_moment::Extension<dim>> extension,
             std::shared_ptr<NodalDGDiscretization<dim>> discretization,
             double gas_gamma, 
@@ -25,7 +27,6 @@ class FiveMomentFluxOperator : public ForwardEulerOperator<FiveMSolutionVec> {
             maxwell_flux(discretization, 5*species.size(), fields)
         {}
 
-
     void perform_forward_euler_step(
         FiveMSolutionVec &dst,
         const FiveMSolutionVec &u,
@@ -34,6 +35,8 @@ class FiveMomentFluxOperator : public ForwardEulerOperator<FiveMSolutionVec> {
         const double b = 0.0,
         const double a = 1.0,
         const double c = 1.0) override;
+
+    double recommend_dt(const MatrixFree<dim>& mf, const FiveMSolutionVec& soln);
 
     private:
     bool fields_enabled;

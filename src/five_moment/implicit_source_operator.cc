@@ -1,4 +1,4 @@
-#include "source_operator.h"
+#include "implicit_source_operator.h"
 
 #include <deal.II/lac/la_parallel_vector.h>
 #include <deal.II/lac/lapack_full_matrix.h>
@@ -13,25 +13,25 @@ namespace warpii {
 namespace five_moment {
 
 template <int dim>
-void FiveMomentSourceOperator<dim>::reinit(
+void FiveMomentImplicitSourceOperator<dim>::reinit(
     const LinearAlgebra::distributed::Vector<double> &solution) {
     soln_register.reinit(solution);
 }
 
 template <int dim>
-void FiveMomentSourceOperator<dim>::evolve_one_time_step(
+void FiveMomentImplicitSourceOperator<dim>::evolve_one_time_step(
     LinearAlgebra::distributed::Vector<double> &solution, const double dt) {
     this->dt = dt;
 
     if (fields_enabled) {
         discretization->mf.cell_loop(
-            &FiveMomentSourceOperator<dim>::local_apply_cell, this, solution,
+            &FiveMomentImplicitSourceOperator<dim>::local_apply_cell, this, solution,
             solution);
     }
 }
 
 template <int dim>
-void FiveMomentSourceOperator<dim>::local_apply_cell(
+void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
     const MatrixFree<dim, double> &mf,
     LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
@@ -172,8 +172,8 @@ void FiveMomentSourceOperator<dim>::local_apply_cell(
     }
 }
 
-template class FiveMomentSourceOperator<1>;
-template class FiveMomentSourceOperator<2>;
+template class FiveMomentImplicitSourceOperator<1>;
+template class FiveMomentImplicitSourceOperator<2>;
 
 }  // namespace five_moment
 }  // namespace warpii

@@ -15,9 +15,9 @@ namespace five_moment {
  * Performs an implicit midpoint solve of the Maxwell-fluid source terms.
  */
 template <int dim>
-class FiveMomentSourceOperator {
+class FiveMomentImplicitSourceOperator {
     public:
-    FiveMomentSourceOperator(
+    FiveMomentImplicitSourceOperator(
             PlasmaNormalization plasma_norm,
             std::vector<std::shared_ptr<Species<dim>>> species,
             std::shared_ptr<NodalDGDiscretization<dim>> discretization,

@@ -1,4 +1,4 @@
-#include "flux_operator.h"
+#include "explicit_operator.h"
 
 #include "solution_vec.h"
 
@@ -6,7 +6,7 @@ namespace warpii {
 namespace five_moment {
 
 template <int dim>
-void FiveMomentFluxOperator<dim>::perform_forward_euler_step(
+void FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
     FiveMSolutionVec &dst, const FiveMSolutionVec &u,
     std::vector<FiveMSolutionVec> &sol_registers, const double dt,
     const double t, const double b, const double a, const double c) {
@@ -22,8 +22,14 @@ void FiveMomentFluxOperator<dim>::perform_forward_euler_step(
     }
 }
 
-template class FiveMomentFluxOperator<1>;
-template class FiveMomentFluxOperator<2>;
+
+template <int dim>
+double FiveMomentExplicitOperator<dim>::recommend_dt(const MatrixFree<dim>& mf, const FiveMSolutionVec& soln) {
+    return fluid_flux.recommend_dt(mf, soln);
+}
+
+template class FiveMomentExplicitOperator<1>;
+template class FiveMomentExplicitOperator<2>;
 
 }  // namespace five_moment
 }  // namespace warpii
