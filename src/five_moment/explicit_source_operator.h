@@ -18,10 +18,12 @@ class FiveMomentExplicitSourceOperator
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
         std::vector<std::shared_ptr<Species<dim>>> species,
         std::shared_ptr<PHMaxwellFields<dim>> fields,
+        PlasmaNormalization plasma_norm,
         bool fields_enabled)
         : discretization(discretization),
           species(species),
           fields(fields),
+          plasma_norm(plasma_norm),
           fields_enabled(fields_enabled)
     {}
 
@@ -48,6 +50,7 @@ class FiveMomentExplicitSourceOperator
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
     std::vector<std::shared_ptr<Species<dim>>> species;
     std::shared_ptr<PHMaxwellFields<dim>> fields;
+    PlasmaNormalization plasma_norm;
     bool fields_enabled;
 };
 

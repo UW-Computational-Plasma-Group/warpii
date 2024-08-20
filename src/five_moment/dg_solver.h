@@ -54,7 +54,7 @@ class FiveMomentDGSolver {
           species(species),
           fields(fields),
           explicit_operator(extension, discretization, gas_gamma, species, 
-                  fields, fields_enabled),
+                  fields, plasma_norm, fields_enabled),
           implicit_source_operator(plasma_norm, species, discretization, fields_enabled),
           n_boundaries(n_boundaries),
           fields_enabled(fields_enabled)

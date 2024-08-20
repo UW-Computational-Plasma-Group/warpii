@@ -110,30 +110,49 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
     
     for (unsigned int cell = cell_range.first; cell < cell_range.second; cell++) {
         for (unsigned int i = 0; i < species.size(); i++) {
-            auto& s = *species[i];
             auto& phi = fluid_evals[i];
             phi.reinit(cell);
             phi.gather_evaluate(src, EvaluationFlags::values);
+        }
+        field_eval->reinit(cell);
+        field_eval->gather_evaluate(src, EvaluationFlags::values);
 
-            for (unsigned int q : phi.quadrature_point_indices()) {
+        for (unsigned int q : fluid_evals[0].quadrature_point_indices()) {
+            auto rho_c = VectorizedArray<double>(0.0);
+
+            for (unsigned int i = 0; i < species.size(); i++) {
+                auto& phi = fluid_evals[i];
+
+                if (fields_enabled) {
+                    double Zi = species[i]->charge;
+                    double Ai = species[i]->mass;
+                    rho_c += phi.get_value(q)[0] * Zi / Ai;
+                }
+
                 const auto p = phi.quadrature_point(q);
-                const auto source_val = evaluate_function<dim, double, 5>(*s.general_source_term, p);
+                const auto source_val = evaluate_function<dim, double, 5>(*species[i]->general_source_term, p);
                 phi.submit_value(source_val, q);
             }
+
+            if (fields_enabled) {
+                auto& phi = *field_eval;
+
+                Tensor<1, 8, VectorizedArray<double>> field_source;
+                if (!fields->get_general_source_term().is_zero) {
+                    const auto p = phi.quadrature_point(q);
+                    field_source += evaluate_function<dim, double, 8>(*(fields->get_general_source_term().func), p);
+                }
+                const double chi = fields->phmaxwell_constants().chi;
+                field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;
+                phi.submit_value(field_source, q);
+            }
+        }
+        for (unsigned int i = 0; i < species.size(); i++) {
+            auto& phi = fluid_evals[i];
             phi.integrate_scatter(EvaluationFlags::values, dst);
         }
-
-        if (fields_enabled && !fields->get_general_source_term().is_zero) {
-            auto& phi = *field_eval;
-            phi.reinit(cell);
-            phi.gather_evaluate(src, EvaluationFlags::values);
-
-            for (unsigned int q : phi.quadrature_point_indices()) {
-                const auto p = phi.quadrature_point(q);
-                const auto source_val = evaluate_function<dim, double, 8>(*(fields->get_general_source_term().func), p);
-                phi.submit_value(source_val, q);
-            }
-            phi.integrate_scatter(EvaluationFlags::values, dst);
+        if (fields_enabled) {
+            field_eval->integrate_scatter(EvaluationFlags::values, dst);
         }
     }
 }
