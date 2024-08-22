@@ -132,8 +132,10 @@ void SSPRK2Integrator<Number, SolutionVec, Operator>::evolve_one_time_step(
     Operator& forward_euler_operator,
     SolutionVec& solution,
     const double dt, const double t) {
+    // f_1 = soln + dt * f(soln)
     forward_euler_operator.perform_forward_euler_step(
         f_1, solution, sol_registers, dt, t);
+    // soln = 0.5*soln + 0.5*f_1 + 0.5*dt*f(f_1)
     forward_euler_operator.perform_forward_euler_step(
         solution, f_1, sol_registers, dt, t + dt, 0.5, 0.5, 0.5);
 }

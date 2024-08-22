@@ -48,6 +48,10 @@ void Species<dim>::declare_parameters(ParameterHandler &prm,
     prm.enter_subsection("InitialCondition");
     SpeciesFunc<dim>::declare_parameters(prm);
     prm.leave_subsection();
+
+    prm.enter_subsection("GeneralSourceTerm");
+    SpeciesFunc<dim>::declare_parameters(prm);
+    prm.leave_subsection();
 }
 
 template <int dim>
@@ -82,9 +86,13 @@ std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
     prm.enter_subsection("InitialCondition");
     std::unique_ptr<SpeciesFunc<dim>> initial_condition = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
     prm.leave_subsection();
+    prm.enter_subsection("GeneralSourceTerm");
+    std::unique_ptr<SpeciesFunc<dim>> source_term = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
+    prm.leave_subsection();
 
     return std::make_shared<Species<dim>>(name, charge, mass, bc_map,
-                                          std::move(initial_condition));
+                                          std::move(initial_condition), 
+                                          std::move(source_term));
 }
 
 template class Species<1>;

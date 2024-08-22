@@ -25,6 +25,10 @@ void PHMaxwellFields<dim>::declare_parameters(ParameterHandler &prm,
     prm.enter_subsection("InitialCondition");
     PHMaxwellFunc<dim>::declare_parameters(prm);
     prm.leave_subsection();  // InitialCondition
+                             
+    prm.enter_subsection("GeneralSourceTerm");
+    PHMaxwellFunc<dim>::declare_parameters(prm);
+    prm.leave_subsection(); // GeneralSourceTerm
 
     for (unsigned int i = 0; i < n_boundaries; i++) {
         prm.enter_subsection("BoundaryCondition_" + std::to_string(i));
@@ -59,6 +63,10 @@ PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
     const auto ic = PHMaxwellFunc<dim>::create_from_parameters(prm);
     prm.leave_subsection();
 
+    prm.enter_subsection("GeneralSourceTerm");
+    const auto source = PHMaxwellFunc<dim>::create_from_parameters(prm);
+    prm.leave_subsection();
+
     MaxwellBCMap<dim> bc_map;
     for (unsigned int i = 0; i < n_boundaries; i++) {
         prm.enter_subsection("BoundaryCondition_" + std::to_string(i));
@@ -78,7 +86,7 @@ PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
 
     prm.leave_subsection(); // PHMaxwellFields
     return std::make_shared<PHMaxwellFields<dim>>(
-        phmaxwell_gamma, phmaxwell_chi, plasma_norm, ic, bc_map);
+        phmaxwell_gamma, phmaxwell_chi, plasma_norm, ic, source, bc_map);
 }
 
 template class PHMaxwellFields<1>;

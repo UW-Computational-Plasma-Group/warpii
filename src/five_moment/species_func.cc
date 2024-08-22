@@ -5,6 +5,8 @@
 namespace warpii {
 namespace five_moment {
 
+const std::string SPECIES_FUNC_DEFAULT = R"(0; 0; 0; 0; 0)";
+
 template <int dim>
 double SpeciesFunc<dim>::value(const Point<dim> &pt,
                                const unsigned int component) const {
@@ -36,9 +38,7 @@ void SpeciesFunc<dim>::declare_parameters(ParameterHandler& prm) {
 
     prm.declare_entry(
         "components",
-        R"(0; \
-0; 0; 0; \
-0)",
+        SPECIES_FUNC_DEFAULT,
         Patterns::Anything(),
         R"(Expressions for the moments of a five-moment species. 
 If `VariablesType == Primitive`, the components will be interpreted as
@@ -112,7 +112,9 @@ std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(Param
     std::unique_ptr<FunctionParser<dim>> func = std::make_unique<FunctionParser<dim>>(5);
     func->initialize(vnames, expression, constants, true);
 
-    return std::make_unique<SpeciesFunc<dim>>(std::move(func), variables_type, gas_gamma);
+    const bool is_zero = (expression == SPECIES_FUNC_DEFAULT);
+
+    return std::make_unique<SpeciesFunc<dim>>(std::move(func), variables_type, gas_gamma, is_zero);
 }
 
 template class SpeciesFunc<1>;

@@ -1,0 +1,44 @@
+set Application = FiveMoment
+set n_dims = 1
+set t_end = 20.0
+set fields_enabled = false
+
+set fe_degree = 2
+set n_species = 1
+set n_boundaries = 2
+
+set n_writeout_frames = 100
+set write_output = true
+
+subsection geometry
+    set left = -5.0
+    set right = 5.0
+    set nx = 200
+    set periodic_dimensions =
+end
+
+subsection Species_0
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1; 0.0; 0; 0; 1.0
+    end
+
+    subsection BoundaryCondition_0
+        set Type = Inflow
+        subsection InflowFunction
+            set components = 1e-6; 0; 0; 0; 1e-6
+        end
+    end
+
+    subsection BoundaryCondition_1
+        set Type = Inflow
+        subsection InflowFunction
+            set components = 1e-6; 0; 0; 0; 1e-6
+        end
+    end
+
+    subsection GeneralSourceTerm
+        set VariablesType = Primitive
+        set components = exp(-x^2); 0; 0; 0; exp(-x^2)
+    end
+end

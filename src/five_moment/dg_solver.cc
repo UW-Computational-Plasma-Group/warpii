@@ -27,14 +27,14 @@ void FiveMomentDGSolver<dim>::project_initial_condition() {
 template <int dim>
 void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback) {
     auto step = [&](double t, double dt) -> bool {
-        ssp_integrator.evolve_one_time_step(flux_operator, solution, dt, t);
-        source_operator.evolve_one_time_step(solution.mesh_sol, dt);
+        ssp_integrator.evolve_one_time_step(explicit_operator, solution, dt, t);
+        implicit_source_operator.evolve_one_time_step(solution.mesh_sol, dt);
 
         std::cout << "t = " << t << std::endl;
         return true;
     };
     auto recommend_dt = [&]() -> double {
-        return fluid_flux_operator.recommend_dt(
+        return explicit_operator.recommend_dt(
             discretization->get_matrix_free(), solution);
     };
 
