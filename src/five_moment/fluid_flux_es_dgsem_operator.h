@@ -141,6 +141,7 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
     auto Mdudt_register = sol_registers.at(0);
     auto dudt_register = sol_registers.at(1);
     auto sol_before_limiting = sol_registers.at(2);
+    dudt_register.mesh_sol = 0.0;
 
     {
         for (auto sp : species) {
@@ -358,17 +359,17 @@ template <int dim, int n_species_static>
 std::array<FEFaceEvaluation<dim, -1, 0, 5, double>, n_species_static> construct_face_eval_array(
         const MatrixFree<dim> &mf) {
     if constexpr (n_species_static == 1) {
-        return {{ {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)} }};
+        return {{ {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 0)} }};
     } else if constexpr (n_species_static == 2) {
         return {{
-            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)},
-            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 5)}
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 0)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 5)}
         }};
     } else if constexpr (n_species_static == 3) {
         return {{
-            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 0)},
-            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 5)},
-            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 0, 10)}
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 0)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 5)},
+            {FEFaceEvaluation<dim, -1, 0, 5, double>(mf, true, 0, 1, 10)}
         }};
     } else {
         AssertThrow(false, ExcMessage("Only supports n_species 1, 2, 3"));
@@ -387,20 +388,20 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
     // Set up FE evaluators
     auto fluid_evals = construct_face_eval_array<dim, n_species_static>(mf);
     auto E_field_eval = fields_enabled
-        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 0, 5*n_species)
+        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 1, 5*n_species)
         : std::nullopt;
     auto B_field_eval = fields_enabled
-        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 0, 5*n_species + 3)
+        ? std::make_optional<FEFaceEvaluation<dim, -1, 0, 3, double>>(mf, true, 0, 1, 5*n_species + 3)
         : std::nullopt;
 
-    FEFaceEvaluation<dim, -1, 0, 5, double> phi_basic(mf, true, 0, 0, 0);
+    FEFaceEvaluation<dim, -1, 0, 5, double> phi_basic(mf, true, 0, 1, 0);
 
     for (unsigned int species_index = 0; species_index < n_species;
          species_index++) {
         EulerBCMap<dim> &bc_map = species.at(species_index)->bc_map;
 
-        FEFaceEvaluation<dim, -1, 0, 5, double> phi(mf, true, 0, 0, 5*species_index);
-        FEFaceEvaluation<dim, -1, 0, 5, double> phi_boundary_flux_integrator(mf, true, 0, 0, 5*species_index);
+        FEFaceEvaluation<dim, -1, 0, 5, double> phi(mf, true, 0, 1, 5*species_index);
+        FEFaceEvaluation<dim, -1, 0, 5, double> phi_boundary_flux_integrator(mf, true, 0, 1, 5*species_index);
 
         for (unsigned int face = face_range.first; face < face_range.second;
              ++face) {

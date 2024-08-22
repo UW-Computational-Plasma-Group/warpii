@@ -32,6 +32,10 @@ class SpeciesFunc : public Function<dim> {
     static std::unique_ptr<SpeciesFunc<dim>> create_from_parameters(ParameterHandler &prm,
                                                    double gas_gamma);
 
+    void set_time(double t) override {
+        func->set_time(t);
+    }
+
 
    private:
     std::unique_ptr<FunctionParser<dim>> func;

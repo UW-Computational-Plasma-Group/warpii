@@ -61,9 +61,6 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
     // Populate constant parts of the local matrix
     for (unsigned int i = 0; i < n_species; i++) {
         L.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -1.0);
-        const double Z_i = species[i]->charge;
-        const double A_i = species[i]->mass;
-        L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, Z_i * Z_i / A_i);
     }
 
     Vector<double> RHS(3 * n_species + 3);
@@ -90,7 +87,9 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
             for (unsigned int lane = 0; lane < VectorizedArray<double>::size();
                  lane++) {
-                // Construct spatially varying entries of matrix
+
+                // Construct entries of the local matrix
+
                 const double B_x = field_vals[3][lane];
                 const double B_y = field_vals[4][lane];
                 const double B_z = field_vals[5][lane];
@@ -104,6 +103,9 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                 for (unsigned int i = 0; i < n_species; i++) {
                     const double Z_i = species[i]->charge;
                     const double A_i = species[i]->mass;
+                    auto rho_i = species_evals[i].get_dof_value(dof)[0][lane];
+
+                    L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, rho_i * Z_i * Z_i / A_i / A_i);
                     L.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
                            omega_c_tau * Z_i / A_i);
                 }
