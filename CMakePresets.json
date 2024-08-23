@@ -31,7 +31,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "WARPII_DOC_BUILD": "TRUE",
-        "DEALII_INSTALL_DIR": "$env{WARPIISOFT}/deps/dealii/dealii-$env{DEALII_VERSION}-RelWithDebInfo",
+        "DEALII_INSTALL_DIR": "$env{WARPIISOFT}/deps/dealii/deal.II-v$env{DEALII_VERSION}",
         "WARPII_EXTENSION_MAKEFILE_GENERATOR": "generate_makefile-macos.sh"
       }
     },
@@ -47,7 +47,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "WARPII_DOC_BUILD": "TRUE",
-        "DEALII_INSTALL_DIR": "$env{WARPIISOFT}/deps/dealii/dealii-$env{DEALII_VERSION}-RelWithDebInfo",
+        "DEALII_INSTALL_DIR": "$env{WARPIISOFT}/deps/dealii/deal.II-v$env{DEALII_VERSION}",
         "WARPII_EXTENSION_MAKEFILE_GENERATOR": "generate_makefile-macos.sh"
       }
     },

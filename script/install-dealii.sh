@@ -8,22 +8,15 @@ DEALII_BUILD_MODE=RelWithDebInfo
 
 DEALII_SRCDIR=$WARPIISOFT/deps/dealii/src/dealii-${DEALII_VERSION}
 
-pushd $DEALII_SRCDIR
+pushd $WARPIISOFT/deps
+git clone https://github.com/dealii/candi.git &2>/dev/null || (cd candi && git pull)
+pushd candi
 
-mkdir -p build-${DEALII_BUILD_MODE}
-pushd build-${DEALII_BUILD_MODE}
+sed -i "" "s/^DEAL_II_VERSION.*$/DEAL_II_VERSION=v${DEALII_VERSION}/" candi.cfg
 
-cmake -DCMAKE_INSTALL_PREFIX=$WARPIISOFT/deps/dealii/dealii-${DEALII_VERSION}-${DEALII_BUILD_MODE} \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DDEAL_II_WITH_ZLIB=ON \
-    -DDEAL_II_WITH_LAPACK=ON \
-    -DDEAL_II_WITH_MPI=ON \
-    -DDEAL_II_WITH_MUPARSER=ON \
-    -DDEAL_II_ALLOW_AUTODETECTION=OFF \ # https://www.dealii.org/current/users/cmake_dealii.html#configureautoconf \
-    ..
+grep DEAL_II_VERSION candi.cfg
 
-make -j4
-make install
+./candi.sh -y --prefix="${WARPIISOFT}/deps/dealii" --packages="dealii" -j $WARPII_MAKE_PARALLELISM
 
-popd # build-${DEALII_BUILD_MODE}
-popd # $DEALII_SRCDIR
+popd # candi
+popd # $WARPIISOFT
