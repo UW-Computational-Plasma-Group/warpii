@@ -17,24 +17,24 @@ void PHMaxwellWrapper::declare_parameters(ParameterHandler &prm) {
 }
 
 std::unique_ptr<AbstractApp> PHMaxwellWrapper::create_app(
-    ParameterHandler &prm, std::string input,
+        SimulationInput& input,
     std::shared_ptr<warpii::Extension> extension) {
-    prm.parse_input_from_string(input, "", true);
+    input.reparse(false);
 
-    switch (prm.get_integer("n_dims")) {
+    switch (input.prm.get_integer("n_dims")) {
         case 1: {
             std::shared_ptr<maxwell::PHMaxwellExtension<1>> ext =
                 unwrap_extension<maxwell::PHMaxwellExtension<1>>(extension);
-            PHMaxwellApp<1>::declare_parameters(prm);
-            prm.parse_input_from_string(input, "", false);
-            return PHMaxwellApp<1>::create_from_parameters(prm);
+            PHMaxwellApp<1>::declare_parameters(input.prm);
+            input.reparse(true);
+            return PHMaxwellApp<1>::create_from_parameters(input);
         }
         case 2: {
             std::shared_ptr<maxwell::PHMaxwellExtension<2>> ext =
                 unwrap_extension<maxwell::PHMaxwellExtension<2>>(extension);
-            PHMaxwellApp<2>::declare_parameters(prm);
-            prm.parse_input_from_string(input, "", false);
-            return PHMaxwellApp<2>::create_from_parameters(prm);
+            PHMaxwellApp<2>::declare_parameters(input.prm);
+            input.reparse(true);
+            return PHMaxwellApp<2>::create_from_parameters(input);
         }
         default: {
             AssertThrow(false, ExcMessage("n_dims must be 1, 2, or 3"));
@@ -60,11 +60,12 @@ void PHMaxwellApp<dim>::declare_parameters(ParameterHandler &prm) {
 
 template <int dim>
 std::unique_ptr<PHMaxwellApp<dim>> PHMaxwellApp<dim>::create_from_parameters(
-    ParameterHandler &prm) {
+    SimulationInput& input) {
+    ParameterHandler& prm = input.prm;
     unsigned int n_boundaries = prm.get_integer("n_boundaries");
 
     PlasmaNormalization plasma_norm =
-        PlasmaNormalization::create_from_parameters(prm);
+        PlasmaNormalization::create_from_parameters(input);
     auto fields = PHMaxwellFields<dim>::create_from_parameters(
         prm, n_boundaries, plasma_norm);
     auto grid = Grid<dim>::create_from_parameters(

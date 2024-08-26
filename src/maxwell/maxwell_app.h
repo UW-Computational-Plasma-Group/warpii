@@ -3,6 +3,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../wrapper.h"
 #include "dg_solver.h"
+#include "../simulation_input.h"
 #include "fields.h"
 
 namespace warpii {
@@ -13,7 +14,7 @@ class PHMaxwellWrapper : public ApplicationWrapper {
     void declare_parameters(ParameterHandler &prm) override;
 
     std::unique_ptr<AbstractApp> create_app(
-        ParameterHandler &prm, std::string input,
+            SimulationInput& input,
         std::shared_ptr<warpii::Extension> ext) override;
 };
 
@@ -37,7 +38,7 @@ class PHMaxwellApp : public AbstractApp {
     static void declare_parameters(ParameterHandler &prm);
 
     static std::unique_ptr<PHMaxwellApp<dim>> create_from_parameters(
-        ParameterHandler &prm);
+        SimulationInput &input);
 
     void setup(WarpiiOpts opts) override;
 

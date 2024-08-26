@@ -67,7 +67,8 @@ The spatial coordinates are defined as variables `x, y, z`, and time as the vari
 }
 
 template <int dim>
-std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(ParameterHandler& prm, double gas_gamma) {
+std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(SimulationInput& input, double gas_gamma) {
+    ParameterHandler& prm = input.prm;
     std::string str = prm.get("VariablesType");
     SpeciesFuncVariablesType variables_type;
     if (str == "Primitive") {
@@ -94,7 +95,7 @@ std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(Param
             AssertThrow(false, ExcNotImplemented());
             break;
     }
-    std::string expression = prm.get("components");
+    std::string expression = input.get_with_subexpression_substitutions("components");
     std::string constants_list = prm.get("constants");
 
     std::vector<std::string> const_list =

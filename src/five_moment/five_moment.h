@@ -30,8 +30,7 @@ class FiveMomentWrapper : public ApplicationWrapper {
    public:
     void declare_parameters(ParameterHandler &prm) override;
 
-    std::unique_ptr<AbstractApp> create_app(ParameterHandler &prm,
-                                            std::string input,
+    std::unique_ptr<AbstractApp> create_app(SimulationInput& input,
                                             std::shared_ptr<warpii::Extension> extension) override;
 };
 
@@ -66,7 +65,7 @@ class FiveMomentApp : public AbstractApp {
             std::shared_ptr<five_moment::Extension<dim>> ext);
 
     static std::unique_ptr<FiveMomentApp<dim>> create_from_parameters(
-        ParameterHandler &prm, std::shared_ptr<five_moment::Extension<dim>> ext);
+            SimulationInput& input, std::shared_ptr<five_moment::Extension<dim>> ext);
 
     void setup(WarpiiOpts opts) override;
 
@@ -142,15 +141,17 @@ Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
 
 template <int dim>
 std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
-    ParameterHandler &prm, 
+        SimulationInput& input,
     std::shared_ptr<five_moment::Extension<dim>> ext) {
+    ParameterHandler& prm = input.prm;
+
     unsigned int n_species = prm.get_integer("n_species");
     unsigned int n_boundaries = prm.get_integer("n_boundaries");
 
     double gas_gamma = prm.get_double("gas_gamma");
 
     const PlasmaNormalization plasma_norm = 
-        PlasmaNormalization::create_from_parameters(prm);
+        PlasmaNormalization::create_from_parameters(input);
 
     std::vector<std::shared_ptr<Species<dim>>> species;
     for (unsigned int i = 0; i < n_species; i++) {
@@ -158,7 +159,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
         subsection_name << "Species_" << i;
         prm.enter_subsection(subsection_name.str());
         species.push_back(
-            Species<dim>::create_from_parameters(prm, n_boundaries, gas_gamma));
+            Species<dim>::create_from_parameters(input, n_boundaries, gas_gamma));
         prm.leave_subsection();
     }
     auto fields = PHMaxwellFields<dim>::create_from_parameters(

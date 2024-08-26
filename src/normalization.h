@@ -1,6 +1,7 @@
 #pragma once
 #include <deal.II/base/exceptions.h>
 #include <deal.II/base/parameter_handler.h>
+#include "simulation_input.h"
 
 using namespace dealii;
 
@@ -28,7 +29,7 @@ class PlasmaNormalization {
     }
 
     static void declare_parameters(ParameterHandler& prm);
-    static PlasmaNormalization create_from_parameters(ParameterHandler& prm);
+    static PlasmaNormalization create_from_parameters(SimulationInput& prm);
 
     /**
      * The nondimensional cyclotron frequency.

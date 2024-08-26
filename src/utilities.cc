@@ -120,3 +120,15 @@ void create_and_move_to_subdir(const std::string subdir) {
     }
 }
 
+void replace_all_occurences(
+        const std::string& needle, 
+        const std::string& replacement, 
+        std::string& haystack) {
+
+    std::string::size_type n = 0;
+    while ((n = haystack.find(needle, n)) != std::string::npos) {
+        haystack.replace(n, needle.size(), replacement);
+        n += replacement.size();
+    }
+}
+

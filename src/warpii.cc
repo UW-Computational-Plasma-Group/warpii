@@ -142,6 +142,39 @@ void Warpii::setup() {
         enable_floating_point_exceptions();
     }
 
+    prm.declare_entry("Subexpressions", "", Patterns::Map(Patterns::Anything(), Patterns::Anything(), 
+            0,  std::numeric_limits<unsigned int>::max(),
+            ";;", ":="),
+            R"(Map of subexpressions to be substituted into the input file before further processing.
+
+Should be given in `key: value` format. For example,
+```
+set Subexpressions = L := 4.0;; \
+                     x0 := 0.0;; \
+                     T := 0.001;; \
+                     gaussian(x) := exp(-((x-x0)/L)^2
+```
+Note that `key: value` pairs should be separated by a comma. Linebreaks can be inserted for readability
+if they are escaped by a backslash `\`.
+
+This map is used to pre-process the input file for convenience, using a simple fixed-point algorithm.
+For example, if later on, the electron initial condition is specified as follows,
+```
+set components = gaussian(x); 0; 0; 0; T*gaussian(x)
+```
+then it would be processed in the following way.
+After one substitution:
+```
+set components = exp(-((x-x0)/L)^2; 0; 0; 0; 0.001*exp(-((x-x0)/L)^2
+```
+After two substitutions:
+```
+set components = exp(-((x-0.0)/4.0)^2; 0; 0; 0; 0.001*exp(-((x-0.0)/4.0)^2
+```
+A third substitution leaves the string unchanged, so the algorithm stops.
+            )");
+    prm.declare_entry("MaxSubexpressionReplacements", "10", Patterns::Integer());
+
     prm.declare_entry(
         "WorkDir", "%A__%I", Patterns::Anything(),
         R"(Format string for the working directory of the simulation.
@@ -170,7 +203,8 @@ Format specifier:
         app_wrapper = std::make_unique<maxwell::PHMaxwellWrapper>();
     }
     app_wrapper->declare_parameters(prm);
-    auto new_ptr = app_wrapper->create_app(prm, input, extension);
+    SimulationInput sim_input = SimulationInput::create_from_parameters(prm, input);
+    auto new_ptr = app_wrapper->create_app(sim_input, extension);
     this->app.swap(new_ptr);
     app->setup(opts);
 
@@ -226,5 +260,7 @@ std::string format_workdir(const ParameterHandler &prm,
 
     return result;
 }
+
+
 
 }  // namespace warpii

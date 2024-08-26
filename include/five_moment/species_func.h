@@ -1,6 +1,7 @@
 #pragma once
 #include <deal.II/base/function_parser.h>
 #include <deal.II/base/parsed_function.h>
+#include "../simulation_input.h"
 
 #include "function_eval.h"
 
@@ -31,8 +32,8 @@ class SpeciesFunc : public Function<dim> {
 
     static void declare_parameters(ParameterHandler &prm);
 
-    static std::unique_ptr<SpeciesFunc<dim>> create_from_parameters(ParameterHandler &prm,
-                                                   double gas_gamma);
+    static std::unique_ptr<SpeciesFunc<dim>> create_from_parameters(
+            SimulationInput& input, double gas_gamma);
 
     void set_time(double t) override {
         func->set_time(t);

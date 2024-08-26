@@ -1,6 +1,7 @@
 #include "five_moment/species.h"
 #include "five_moment/species_func.h"
 #include <deal.II/base/patterns.h>
+#include "../simulation_input.h"
 #include "../common_params.h"
 
 namespace warpii {
@@ -56,7 +57,8 @@ void Species<dim>::declare_parameters(ParameterHandler &prm,
 
 template <int dim>
 std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
-    ParameterHandler &prm, unsigned int n_boundaries, double gas_gamma) {
+    SimulationInput& input, unsigned int n_boundaries, double gas_gamma) {
+    ParameterHandler& prm = input.prm;
     std::string name = prm.get("name");
     double charge = prm.get_double("charge");
     double mass = prm.get_double("mass");
@@ -74,7 +76,7 @@ std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
                 bc_map.set_supersonic_outflow_boundary(boundary_id);
             } else if (bc_type == "Inflow") {
                 prm.enter_subsection("InflowFunction");
-                auto inflow_func = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
+                auto inflow_func = SpeciesFunc<dim>::create_from_parameters(input, gas_gamma);
                 bc_map.set_inflow_boundary(boundary_id, std::move(inflow_func));
                 prm.leave_subsection(); // InflowFunction
             } else if (bc_type == "Extension") {
@@ -84,10 +86,10 @@ std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
         }
     }
     prm.enter_subsection("InitialCondition");
-    std::unique_ptr<SpeciesFunc<dim>> initial_condition = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
+    std::unique_ptr<SpeciesFunc<dim>> initial_condition = SpeciesFunc<dim>::create_from_parameters(input, gas_gamma);
     prm.leave_subsection();
     prm.enter_subsection("GeneralSourceTerm");
-    std::unique_ptr<SpeciesFunc<dim>> source_term = SpeciesFunc<dim>::create_from_parameters(prm, gas_gamma);
+    std::unique_ptr<SpeciesFunc<dim>> source_term = SpeciesFunc<dim>::create_from_parameters(input, gas_gamma);
     prm.leave_subsection();
 
     return std::make_shared<Species<dim>>(name, charge, mass, bc_map,
