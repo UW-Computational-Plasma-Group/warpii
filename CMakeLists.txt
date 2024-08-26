@@ -16,6 +16,12 @@ if (WARPII_ONLY_DOCS)
     return()
 endif()
 
+if(NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
+    find_program(CCACHE_PROGRAM ccache)
+    if(CCACHE_PROGRAM)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+    endif()
+endif()
 
 ####
 ####  Set up dependencies
