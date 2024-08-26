@@ -69,7 +69,7 @@ test: check-env build doc
 install-dealii: $(WARPIISOFT)
 	cd script && $(MAKE) $(WARPIISOFT)/deps/dealii
 
-doc: check-env 
+doc: check-env build
 	cmake --build --preset $(WARPII_CMAKE_PRESET) --target documentation
 
 .PHONY: clean check-env required-vars-set warn-env-vars
