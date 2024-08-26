@@ -34,6 +34,10 @@ class MaxwellBCMap {
             return function_bcs.at(boundary_id);
         }
 
+        const std::map<types::boundary_id, PHMaxwellFunc<dim>>& get_dirichlet_bcs() const {
+            return function_bcs;
+        }
+
 
     private:
         std::map<types::boundary_id, MaxwellBCType> bcs;

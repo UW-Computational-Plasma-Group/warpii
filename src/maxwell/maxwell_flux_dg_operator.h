@@ -78,7 +78,7 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
 template <int dim, typename SolutionVec>
 void MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_step(
     SolutionVec &dst, const SolutionVec &u,
-    std::vector<SolutionVec> &sol_registers, const double dt, const double,
+    std::vector<SolutionVec> &sol_registers, const double dt, const double t,
     const double b, const double a, const double c) {
     auto Mdudt_register = sol_registers.at(0);
     auto dudt_register = sol_registers.at(1);
@@ -91,6 +91,10 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_step(
         this, Mdudt_register.mesh_sol, u.mesh_sol, true,
         MatrixFree<dim, double>::DataAccessOnFaces::values,
         MatrixFree<dim, double>::DataAccessOnFaces::values);
+
+    for (auto &bc : fields->get_bc_map().get_dirichlet_bcs()) {
+        bc.second.func->set_time(t);
+    }
 
     {
         discretization->mf.cell_loop(
