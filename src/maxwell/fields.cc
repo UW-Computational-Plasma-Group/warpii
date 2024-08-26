@@ -38,7 +38,7 @@ void PHMaxwellFields<dim>::declare_parameters(ParameterHandler &prm,
                 "with `boundary_id == i`.", true);
 
         prm.declare_entry("Type", "Dirichlet",
-                          Patterns::Selection("PerfectConductor|Dirichlet"));
+                          Patterns::Selection("CopyOut|PerfectConductor|Dirichlet"));
         prm.enter_subsection("DirichletFunction");
         PHMaxwellFunc<dim>::declare_parameters(prm);
         prm.leave_subsection();
@@ -73,7 +73,9 @@ PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
         std::string bc_type = prm.get("Type");
         auto boundary_id = static_cast<types::boundary_id>(i);
 
-        if (bc_type == "PerfectConductor") {
+        if (bc_type == "CopyOut") {
+            bc_map.set_copy_out_boundary(boundary_id);
+        } else if (bc_type == "PerfectConductor") {
             bc_map.set_perfect_conductor_boundary(boundary_id);
         } else if (bc_type == "Dirichlet") {
             prm.enter_subsection("DirichletFunction");

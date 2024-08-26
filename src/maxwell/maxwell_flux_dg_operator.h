@@ -234,8 +234,11 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             psi_m = val_m[7];
 
             Tensor<1, 8, VA> val_bdy;
+            Tensor<1, 8, VA> val_p;
 
-            if (bc_type == MaxwellBCType::PERFECT_CONDUCTOR) {
+            if (bc_type == MaxwellBCType::COPY_OUT) {
+                val_p = val_m;
+            } else if (bc_type == MaxwellBCType::PERFECT_CONDUCTOR) {
                 // Just the normal component of E
                 const auto E_bdy = (n3d * E_m) * n3d;
                 // Just the tangential components of B
@@ -248,13 +251,13 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
                 }
                 val_bdy[6] = phi_bdy;
                 val_bdy[7] = psi_bdy;
+                val_p = 2.0*val_bdy - val_m;
             } else if (bc_type == MaxwellBCType::DIRICHLET) {
                 const auto p = fe_eval_m.quadrature_point(q);
                 const auto& func = fields->get_bc_map().get_dirichlet_func(boundary_id);
                 val_bdy = evaluate_function<dim, VA, 8>(*func.func, p);
+                val_p = 2.0*val_bdy - val_m;
             }
-
-            const Tensor<1, 8, VA> val_p = 2.0*val_bdy - val_m;
 
             const auto numerical_flux = ph_maxwell_numerical_flux(val_m, val_p, n, constants);
             fe_eval_m.submit_value(-numerical_flux, q);
