@@ -9,6 +9,7 @@ namespace warpii {
 
 enum MaxwellBCType {
     PERFECT_CONDUCTOR,
+    COPY_OUT,
     DIRICHLET
 };
 
@@ -24,6 +25,10 @@ class MaxwellBCMap {
                 const types::boundary_id boundary_id,
                 PHMaxwellFunc<dim>&& func);
 
+        void set_copy_out_boundary(
+                const types::boundary_id boundary_id);
+
+
         MaxwellBCType get_bc_type(
                 const types::boundary_id boundary_id) const {
             return bcs.at(boundary_id);
@@ -32,6 +37,10 @@ class MaxwellBCMap {
         const PHMaxwellFunc<dim>& get_dirichlet_func(
                 const types::boundary_id boundary_id) const {
             return function_bcs.at(boundary_id);
+        }
+
+        const std::map<types::boundary_id, PHMaxwellFunc<dim>>& get_dirichlet_bcs() const {
+            return function_bcs;
         }
 
 
@@ -59,6 +68,14 @@ void MaxwellBCMap<dim>::set_dirichlet_boundary(
 
     bcs.emplace(boundary_id, MaxwellBCType::DIRICHLET);
     function_bcs.emplace(boundary_id, std::move(func));
+}
+
+template <int dim>
+void MaxwellBCMap<dim>::set_copy_out_boundary(const types::boundary_id boundary_id) {
+    AssertThrow(bcs.find(boundary_id) == bcs.end(),
+            ExcMessage("Boundary " + std::to_string(static_cast<int>(boundary_id))
+                + " was already assigned a boundary condition."));
+    bcs.emplace(boundary_id, MaxwellBCType::COPY_OUT);
 }
 
 }
