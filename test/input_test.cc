@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "deal.II/base/parameter_handler.h"
 #include "src/five_moment/five_moment.h"
-#include "src/warpii.h"
+#include "warpii.h"
 
 using namespace dealii;
 using namespace warpii;

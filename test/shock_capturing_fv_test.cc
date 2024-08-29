@@ -2,7 +2,7 @@
 #include "src/five_moment/five_moment.h"
 #include "src/five_moment/fluxes/subcell_finite_volume_flux.h"
 #include "src/five_moment/solution_vec.h"
-#include "src/warpii.h"
+#include "warpii.h"
 #include <gtest/gtest.h>
 
 using namespace dealii;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../extensions/extension.h"
+#include "extensions/extension.h"
 
 namespace warpii {
 namespace maxwell {

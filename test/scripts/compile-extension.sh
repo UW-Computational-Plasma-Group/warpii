@@ -21,7 +21,7 @@ pushd $TMP
 # Create a minimal main.cc 
 cat >main.cc <<EOF
 #include <deal.II/base/mpi.h>
-#include "src/five_moment/extension.h"
+#include "five_moment/extension.h"
 
 class TestExtension : warpii::five_moment::Extension<2> {};
 

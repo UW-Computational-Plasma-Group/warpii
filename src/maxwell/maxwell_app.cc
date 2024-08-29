@@ -3,9 +3,9 @@
 #include <deal.II/base/parameter_handler.h>
 
 #include "../common_params.h"
-#include "../extensions/extension.h"
+#include "extensions/extension.h"
 #include "dg_solver.h"
-#include "extension.h"
+#include "maxwell/extension.h"
 
 namespace warpii {
 namespace maxwell {

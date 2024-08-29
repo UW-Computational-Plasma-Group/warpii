@@ -1,7 +1,7 @@
 #include <deal.II/matrix_free/fe_evaluation.h>
-#include "src/five_moment/extension.h"
+#include "five_moment/extension.h"
 #include "src/five_moment/euler.h"
-#include "src/warpii.h"
+#include "warpii.h"
 #include <gtest/gtest.h>
 #include "src/five_moment/five_moment.h"
 

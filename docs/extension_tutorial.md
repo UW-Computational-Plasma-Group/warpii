@@ -21,8 +21,8 @@ $ cd my_extension
 ```cpp
 // my_extension/main.cc
 
-#include "src/five_moment/extension.h"
-#include "src/warpii.h"
+#include "five_moment/extension.h"
+#include "warpii.h"
 #include <deal.II/base/mpi.h>
 
 class MyExtension : public warpii::five_moment::Extension<2> {};

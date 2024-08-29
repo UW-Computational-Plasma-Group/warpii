@@ -1,4 +1,4 @@
-#include "src/warpii.h"
+#include "warpii.h"
 #include <gtest/gtest.h>
 #include "src/maxwell/maxwell_app.h"
 

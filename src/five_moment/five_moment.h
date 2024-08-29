@@ -8,7 +8,7 @@
 #include <fstream>
 #include <memory>
 
-#include "../app.h"
+#include "app.h"
 #include "../grid.h"
 #include "../wrapper.h"
 #include "../dgsem/nodal_dg_discretization.h"
@@ -17,7 +17,7 @@
 #include "postprocessor.h"
 #include "solution_vec.h"
 #include "species.h"
-#include "extension.h"
+#include "five_moment/extension.h"
 #include "dg_solution_helper.h"
 #include "../common_params.h"
 

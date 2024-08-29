@@ -1,4 +1,4 @@
-#include "src/warpii.h"
+#include "warpii.h"
 #include <gtest/gtest.h>
 
 using namespace dealii;

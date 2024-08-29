@@ -1,5 +1,5 @@
 #pragma once
-#include "../app.h"
+#include "app.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../wrapper.h"
 #include "dg_solver.h"
