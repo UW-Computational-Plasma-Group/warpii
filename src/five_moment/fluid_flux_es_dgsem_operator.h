@@ -18,7 +18,7 @@
 #include "five_moment/extension.h"
 #include "../utilities.h"
 #include "../dgsem/nodal_dg_discretization.h"
-#include "euler.h"
+#include "five_moment/euler.h"
 #include "fluxes/subcell_finite_volume_flux.h"
 #include "solution_vec.h"
 #include "species.h"

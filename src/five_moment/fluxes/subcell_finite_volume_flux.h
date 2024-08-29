@@ -15,7 +15,7 @@
 
 #include "../../dof_utils.h"
 #include "../../utilities.h"
-#include "../euler.h"
+#include "five_moment/euler.h"
 #include "../solution_vec.h"
 #include "../species.h"
 #include "jacobian_utils.h"
