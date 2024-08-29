@@ -99,7 +99,8 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         LinearAlgebra::distributed::Vector<double> &dst,
         const LinearAlgebra::distributed::Vector<double> &src,
         const std::pair<unsigned int, unsigned int> &face_range,
-        FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes) const;
+        FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes,
+        const double t) const;
 
     double compute_cell_transport_speed(
         const MatrixFree<dim, double> &mf,
@@ -177,7 +178,7 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                            const LinearAlgebra::distributed::Vector<double> &,
                            const std::pair<unsigned int, unsigned int> &)>
             boundary_operation =
-                [this, &d_dt_boundary_integrated_fluxes](
+                [this, &d_dt_boundary_integrated_fluxes, t](
                     const MatrixFree<dim, Number> &mf,
                     LinearAlgebra::distributed::Vector<double> &dst,
                     const LinearAlgebra::distributed::Vector<double> &src,
@@ -382,7 +383,8 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
     const MatrixFree<dim> &mf, LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &face_range,
-    FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes)
+    FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes,
+    const double t)
     const {
 
     // Set up FE evaluators
