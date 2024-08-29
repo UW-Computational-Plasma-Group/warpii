@@ -12,7 +12,7 @@
 
 #include <functional>
 
-#include "../grid.h"
+#include "grid.h"
 #include "../rk.h"
 #include "../timestepper.h"
 #include "solution_vec.h"

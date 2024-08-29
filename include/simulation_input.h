@@ -19,6 +19,11 @@ class SimulationInput {
 
     void reparse(bool is_final);
 
+    /**
+     * Return the `ParameterHandler` to the top level.
+     */
+    void return_to_top_level();
+
     std::string get_with_subexpression_substitutions(const std::string& key);
 
         ParameterHandler& prm;

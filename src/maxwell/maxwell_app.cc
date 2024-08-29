@@ -50,7 +50,7 @@ void PHMaxwellApp<dim>::declare_parameters(ParameterHandler &prm) {
 
     PHMaxwellFields<dim>::declare_parameters(prm, n_boundaries);
 
-    Grid<dim>::declare_parameters(prm, std::make_shared<GridExtension<dim>>());
+    Grid<dim>::declare_parameters(prm);
 
     declare_fe_degree(prm);
     declare_t_end(prm);

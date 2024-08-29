@@ -3,7 +3,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../wrapper.h"
 #include "dg_solver.h"
-#include "../simulation_input.h"
+#include "simulation_input.h"
 #include "fields.h"
 
 namespace warpii {

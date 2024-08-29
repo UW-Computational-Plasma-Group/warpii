@@ -186,10 +186,10 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
             -> void {
                 if (n_species == 1) {
                     this->template local_apply_boundary_face<1>(mf, dst, src, cell_range,
-                                                    d_dt_boundary_integrated_fluxes);
+                                                    d_dt_boundary_integrated_fluxes, t);
                 } else if (n_species == 2) {
                     this->template local_apply_boundary_face<2>(mf, dst, src, cell_range,
-                                                    d_dt_boundary_integrated_fluxes);
+                                                    d_dt_boundary_integrated_fluxes, t);
                 } else {
                     Assert(false, ExcMessage("We have only templated up to n_species = 2."));
                 }
@@ -465,11 +465,11 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                     compute_from_ghost = false;
                     if (fields_enabled) {
                         numerical_flux = extension->boundary_flux(
-                                boundary_id, q, species_index, 
+                                boundary_id, q, t, species_index, 
                                 fluid_evals, *E_field_eval, *B_field_eval);
                     } else {
                         numerical_flux = extension->boundary_flux(
-                                boundary_id, q, species_index, 
+                                boundary_id, q, t, species_index, 
                                 fluid_evals);
                     }
                 } else {

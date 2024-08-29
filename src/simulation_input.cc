@@ -20,6 +20,16 @@ void SimulationInput::reparse(bool is_final) {
     prm.parse_input_from_string(raw_input, "", !is_final);
 }
 
+void SimulationInput::return_to_top_level() {
+    // Clear the ParameterHandler back to the top
+    // TODO: this weirdness is necessary since in deal.ii 9.5, get_current_path()
+    // is a private method.
+    std::vector<std::string> check_path = {"geometry"};
+    while (!prm.subsection_path_exists(check_path)) {
+        prm.leave_subsection();
+    }
+}
+
 std::string SimulationInput::get_with_subexpression_substitutions(const std::string &key) {
     std::string value = prm.get(key);
 

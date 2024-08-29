@@ -1,7 +1,7 @@
 #include "five_moment/species.h"
 #include "five_moment/species_func.h"
 #include <deal.II/base/patterns.h>
-#include "../simulation_input.h"
+#include "simulation_input.h"
 #include "../common_params.h"
 
 namespace warpii {

@@ -2,6 +2,7 @@
 
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/grid/tria.h>
+#include "simulation_input.h"
 
 using namespace dealii;
 
@@ -25,6 +26,14 @@ template <int dim>
 class GridExtension {
     public:
     virtual ~GridExtension() = default;
+
+    void declare_parameters(ParameterHandler& prm) {
+        prm.enter_subsection("geometry");
+        if (prm.get("GridType") == "Extension") {
+            declare_geometry_parameters(prm);
+        }
+        prm.leave_subsection();
+    }
 
     /**
      * Declare any parameters required for the triangulation.

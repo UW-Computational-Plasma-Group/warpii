@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../grid.h"
+#include "grid.h"
 #include <memory>
 #include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_system.h>

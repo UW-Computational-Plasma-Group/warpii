@@ -15,7 +15,7 @@
 
 #include "function_eval.h"
 #include "../dgsem/nodal_dg_discretization.h"
-#include "../grid.h"
+#include "grid.h"
 
 namespace warpii {
 namespace five_moment {

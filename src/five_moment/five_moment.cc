@@ -1,5 +1,5 @@
 #include "five_moment.h"
-#include "../simulation_input.h"
+#include "simulation_input.h"
 
 #include <deal.II/base/exceptions.h>
 #include <deal.II/base/utilities.h>
@@ -31,14 +31,14 @@ std::unique_ptr<AbstractApp> FiveMomentWrapper::create_app(
             std::shared_ptr<five_moment::Extension<1>> ext = 
                 unwrap_extension<five_moment::Extension<1>>(extension);
             FiveMomentApp<1>::declare_parameters(input.prm, ext);
-            input.reparse(true);
+            input.reparse(false);
             return FiveMomentApp<1>::create_from_parameters(input, ext);
         }
         case 2: {
             std::shared_ptr<five_moment::Extension<2>> ext = 
                 unwrap_extension<five_moment::Extension<2>>(extension);
             FiveMomentApp<2>::declare_parameters(input.prm, ext);
-            input.reparse(true);
+            input.reparse(false);
             return FiveMomentApp<2>::create_from_parameters(input, ext);
         }
                 /*

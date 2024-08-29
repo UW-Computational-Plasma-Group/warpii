@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "app.h"
-#include "../grid.h"
+#include "grid.h"
 #include "../wrapper.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "dg_solver.h"
@@ -98,7 +98,7 @@ class FiveMomentApp : public AbstractApp {
 
 template <int dim>
 void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
-        std::shared_ptr<five_moment::Extension<dim>> ext) {
+        std::shared_ptr<five_moment::Extension<dim>>) {
     unsigned int n_species = prm.get_integer("n_species");
     unsigned int n_boundaries = prm.get_integer("n_boundaries");
 
@@ -114,7 +114,7 @@ void FiveMomentApp<dim>::declare_parameters(ParameterHandler &prm,
     }
     PHMaxwellFields<dim>::declare_parameters(prm, n_boundaries);
 
-    Grid<dim>::declare_parameters(prm, ext);
+    Grid<dim>::declare_parameters(prm);
 
     declare_fe_degree(prm);
     prm.declare_entry("fields_enabled", "auto", Patterns::Selection("true|false|auto"),
@@ -193,7 +193,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
                                                     t_end,
                                                     n_writeout_frames);
 
-    ext->set_species(species);
+    ext->prepare_extension(input, app->species, gas_gamma);
 
     return app;
 }
