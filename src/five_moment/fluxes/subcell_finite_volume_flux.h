@@ -17,7 +17,7 @@
 #include "../../utilities.h"
 #include "five_moment/euler.h"
 #include "../solution_vec.h"
-#include "../species.h"
+#include "five_moment/species.h"
 #include "jacobian_utils.h"
 #include "../../dgsem/nodal_dg_discretization.h"
 

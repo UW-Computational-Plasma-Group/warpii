@@ -1,5 +1,5 @@
-#include "species.h"
-#include "species_func.h"
+#include "five_moment/species.h"
+#include "five_moment/species_func.h"
 #include <deal.II/base/patterns.h>
 #include "../common_params.h"
 

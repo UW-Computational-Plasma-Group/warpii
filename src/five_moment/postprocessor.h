@@ -1,7 +1,7 @@
 #pragma once
 
 #include "five_moment/euler.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include <deal.II/numerics/data_out.h>
 
 #include <cmath>

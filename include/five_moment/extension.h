@@ -4,6 +4,7 @@
 #include <deal.II/grid/tria.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
 
+#include "species.h"
 #include "../extensions/extension.h"
 
 using namespace dealii;
@@ -85,8 +86,16 @@ class Extension : public virtual warpii::Extension,
     N_SPECIES_DECLS(1)
     N_SPECIES_DECLS(2)
 
+    void set_species(std::vector<std::shared_ptr<Species<dim>>> species) {
+        this->species = species;
+    }
+
+    const Species<dim>& get_species(unsigned int i) {
+        return *species.at(i);
+    }
+
    private:
-    std::unique_ptr<FiveMomentApp<dim>>;
+    std::vector<std::shared_ptr<Species<dim>>> species;
 };
 
 #define PREPARE_BOUNDARY_FLUX_EVALUATORS_IMPL(n_species) \

@@ -16,7 +16,7 @@
 #include "../timestepper.h"
 #include "postprocessor.h"
 #include "solution_vec.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include "five_moment/extension.h"
 #include "dg_solution_helper.h"
 #include "../common_params.h"
@@ -191,6 +191,8 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
                                                     write_output,
                                                     t_end,
                                                     n_writeout_frames);
+
+    ext->set_species(species);
 
     return app;
 }

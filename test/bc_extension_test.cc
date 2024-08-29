@@ -278,3 +278,69 @@ end
     difference.add(-1.0, reference_soln.mesh_sol);
     EXPECT_LE(difference.l2_norm(), 1e-8);
 }
+
+class AccessesSpeciesVectorExtension : public five_moment::Extension<1> {
+    public:
+
+    AccessesSpeciesVectorExtension(double expected_mass): expected_mass(expected_mass) {}
+
+    void prepare_boundary_flux_evaluators(
+            const unsigned int,
+            const unsigned int,
+            const LinearAlgebra::distributed::Vector<double> &,
+            std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 1> &) override {
+        ASSERT_EQ(expected_mass, get_species(0).mass);
+    }
+
+    Tensor<1, 5, VectorizedArray<double>> boundary_flux(
+            const types::boundary_id , const unsigned int,
+        const unsigned int,
+        const std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 1> &
+        ) override {
+        Tensor<1, 5, VectorizedArray<double>> result;
+        return result;
+    }
+
+    private:
+    double expected_mass;
+};
+
+TEST(BCExtensionTest, SpeciesVecSetTest) {
+    std::string input_template = R"(
+set Application = FiveMoment
+set n_dims = 1
+set t_end = 0.001
+set write_output = false
+set n_boundaries = 2
+set n_species = 1
+
+subsection geometry
+    set periodic_dimensions =
+end
+
+subsection Species_0
+    set name = electron
+    set mass = 0.0089
+
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1.0; 0.0; 0.0; 0.0; 1.0
+    end
+
+    subsection BoundaryCondition_0
+        set Type = Extension
+    end
+end
+    )";
+
+    // Obtain reference solution
+    std::stringstream reference_input;
+    reference_input << input_template;
+    WarpiiOpts opts;
+    auto ext = std::make_shared<AccessesSpeciesVectorExtension>(0.0089);
+    Warpii warpii_obj(opts, ext);
+    warpii_obj.opts.fpe = true;
+    warpii_obj.input = reference_input.str();
+    warpii_obj.run();
+}
+

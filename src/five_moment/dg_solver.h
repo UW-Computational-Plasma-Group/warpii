@@ -19,7 +19,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "explicit_operator.h"
 #include "implicit_source_operator.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include "../maxwell/maxwell.h"
 #include "../maxwell/fields.h"
 

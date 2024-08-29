@@ -21,7 +21,7 @@
 #include "five_moment/euler.h"
 #include "fluxes/subcell_finite_volume_flux.h"
 #include "solution_vec.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include "fluxes/split_form_volume_flux.h"
 #include "fluxes/jacobian_utils.h"
 #include "../dgsem/persson_peraire_shock_indicator.h"
