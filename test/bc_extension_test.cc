@@ -4,10 +4,30 @@
 #include "warpii.h"
 #include <gtest/gtest.h>
 #include "src/five_moment/five_moment.h"
+#include "five_moment/species_func.h"
+#include "function_eval.h"
 
 using namespace warpii;
+using namespace warpii::five_moment;
 
+/**
+ * This test verifies that we can reproduce a Dirichlet boundary condition via the extensions mechanism.
+ */
 class SingleSpeciesBCExtension : public five_moment::Extension<1> {
+    void declare_bc_parameters(ParameterHandler& prm,
+            unsigned int, types::boundary_id) override {
+        prm.enter_subsection("GhostValues");
+        SpeciesFunc<1>::declare_parameters(prm);
+        prm.leave_subsection();
+    }
+
+    void populate_bc_from_parameters(SimulationInput& input,
+            unsigned int, types::boundary_id) override {
+        input.prm.enter_subsection("GhostValues");
+        ghost_values = SpeciesFunc<1>::create_from_parameters(input, gas_gamma);
+        input.prm.leave_subsection();
+    }
+
     void prepare_boundary_flux_evaluators(
             const unsigned int face,
             const unsigned int ,
@@ -20,21 +40,20 @@ class SingleSpeciesBCExtension : public five_moment::Extension<1> {
 
     Tensor<1, 5, VectorizedArray<double>> boundary_flux(
             const types::boundary_id , const unsigned int q,
+            const double time,
         const unsigned int,
         const std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 1> &fluid_evals) override {
         auto& electrons = fluid_evals[0];
         const auto q_in = electrons.get_value(q);
 
-        Tensor<1, 5, VectorizedArray<double>> ghost_state;
-        ghost_state[0] = VectorizedArray<double>(1e-6);
-        ghost_state[1] = VectorizedArray<double>(0.0);
-        ghost_state[2] = VectorizedArray<double>(0.0);
-        ghost_state[3] = VectorizedArray<double>(0.0);
-        ghost_state[4] = VectorizedArray<double>(1e-6 * 1.5);
+        Tensor<1, 5, VectorizedArray<double>> ghost_state = 
+            ghost_values->evaluate(electrons.quadrature_point(q), time);
 
         return five_moment::euler_numerical_flux<1, VectorizedArray<double>>(
                 q_in, ghost_state, electrons.normal_vector(q), 5.0 / 3.0);
     }
+
+    std::unique_ptr<SpeciesFunc<1>> ghost_values;
 };
 
 TEST(BCExtensionTest, SingleSpeciesTest) {
@@ -79,7 +98,7 @@ subsection Species_0
         set Type = Inflow
         subsection InflowFunction
             set VariablesType = Primitive
-            set components = 1e-6; 0; 0; 0; 1e-6
+            set components = 1 + t; 0; 0; 0; 1.53 + t
         end
     end
 end
@@ -101,9 +120,17 @@ end
 subsection Species_0
     subsection BoundaryCondition_0
         set Type = Extension
+        subsection GhostValues
+            set VariablesType = Primitive
+            set components = 1e-6; 0; 0; 0; 1e-6
+        end
     end
     subsection BoundaryCondition_1
         set Type = Extension
+        subsection GhostValues
+            set VariablesType = Primitive
+            set components = 1 + t; 0; 0; 0; 1.53 + t
+        end
     end
 end
     )";
@@ -135,6 +162,7 @@ class TwoSpeciesBCExtension : public five_moment::Extension<1> {
 
     Tensor<1, 5, VectorizedArray<double>> boundary_flux(
             const types::boundary_id , const unsigned int q,
+            const double,
         const unsigned int,
         const std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 2> &fluid_evals,
         const FEFaceEvaluation<1, -1, 0, 3, double>&,
@@ -294,6 +322,7 @@ class AccessesSpeciesVectorExtension : public five_moment::Extension<1> {
 
     Tensor<1, 5, VectorizedArray<double>> boundary_flux(
             const types::boundary_id , const unsigned int,
+            const double,
         const unsigned int,
         const std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 1> &
         ) override {
