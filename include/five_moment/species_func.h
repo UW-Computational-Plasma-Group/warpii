@@ -2,6 +2,8 @@
 #include <deal.II/base/function_parser.h>
 #include <deal.II/base/parsed_function.h>
 
+#include "function_eval.h"
+
 using namespace dealii;
 
 namespace warpii {
@@ -36,6 +38,8 @@ class SpeciesFunc : public Function<dim> {
         func->set_time(t);
     }
 
+    template <typename Number>
+    Tensor<1, 5, Number> evaluate(const Point<dim, Number>& p, double t);
 
    private:
     std::unique_ptr<FunctionParser<dim>> func;

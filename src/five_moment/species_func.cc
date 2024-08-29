@@ -117,8 +117,18 @@ std::unique_ptr<SpeciesFunc<dim>> SpeciesFunc<dim>::create_from_parameters(Param
     return std::make_unique<SpeciesFunc<dim>>(std::move(func), variables_type, gas_gamma, is_zero);
 }
 
+
+template <int dim>
+template <typename Number>
+Tensor<1, 5, Number> SpeciesFunc<dim>::evaluate(const Point<dim, Number>& p, double t) {
+    func->set_time(t);
+    return evaluate_function<dim, 5, Number>(*this, p);
+}
+
+
 template class SpeciesFunc<1>;
 template class SpeciesFunc<2>;
+template Tensor<1, 5, VectorizedArray<double>> SpeciesFunc<1>::evaluate<VectorizedArray<double>>(const Point<1, VectorizedArray<double>>& p, double t);
 
 }  // namespace five_moment
 }  // namespace warpii
