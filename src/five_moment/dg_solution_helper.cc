@@ -37,7 +37,7 @@ void FiveMomentDGSolutionHelper<dim>::project_fluid_quantities(
     for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
         phi.reinit(cell);
         for (const unsigned int q : phi.quadrature_point_indices()) {
-            auto value = evaluate_function<dim, double, 5>(
+            auto value = evaluate_function<dim, 5>(
                                      function, phi.quadrature_point(q));
             phi.submit_dof_value(value, q);
         }
@@ -62,7 +62,7 @@ void FiveMomentDGSolutionHelper<dim>::project_field_quantities(
     for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
         phi.reinit(cell);
         for (const unsigned int q : phi.quadrature_point_indices()) {
-            auto value = evaluate_function<dim, double, 8>(
+            auto value = evaluate_function<dim, 8>(
                                      function, phi.quadrature_point(q));
             phi.submit_dof_value(value, q);
         }

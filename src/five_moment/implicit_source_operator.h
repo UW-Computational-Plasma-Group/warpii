@@ -3,7 +3,7 @@
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/lac/la_parallel_vector.h>
 
-#include "species.h"
+#include "five_moment/species.h"
 #include "../normalization.h"
 #include "../dgsem/nodal_dg_discretization.h"
 

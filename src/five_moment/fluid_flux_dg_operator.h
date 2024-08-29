@@ -9,10 +9,10 @@
 #include <functional>
 
 #include "../function_eval.h"
-#include "bc_helper.h"
+#include "five_moment/bc_helper.h"
 #include "../dgsem/nodal_dg_discretization.h"
-#include "euler.h"
-#include "species.h"
+#include "five_moment/euler.h"
+#include "five_moment/species.h"
 
 using namespace dealii;
 

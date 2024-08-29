@@ -8,7 +8,7 @@ using namespace dealii;
 
 using Number = double;
 
-  template <int dim, typename Number, typename VectorizedNumber>
+  template <int dim, typename VectorizedNumber>
 VectorizedNumber
 evaluate_function(const Function<dim>                       &function,
                 const Point<dim, VectorizedNumber> &p_vectorized,
@@ -26,7 +26,7 @@ return result;
 }
 
 
-template <int dim, typename Number, int n_components, typename VectorizedNumber>
+template <int dim, int n_components, typename VectorizedNumber>
 Tensor<1, n_components, VectorizedNumber>
 evaluate_function(const Function<dim>                       &function,
                 const Point<dim, VectorizedNumber> &p_vectorized)

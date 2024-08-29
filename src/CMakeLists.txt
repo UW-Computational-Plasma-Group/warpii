@@ -26,6 +26,7 @@ add_library(libwarpii
     normalization.cc
     fpe.cc
     utilities.cc
+    simulation_input.cc
     )
 deal_ii_setup_target(libwarpii)
 

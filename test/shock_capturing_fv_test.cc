@@ -1,4 +1,4 @@
-#include "src/five_moment/euler.h"
+#include "five_moment/euler.h"
 #include "src/five_moment/five_moment.h"
 #include "src/five_moment/fluxes/subcell_finite_volume_flux.h"
 #include "src/five_moment/solution_vec.h"

@@ -12,6 +12,9 @@ which enforces that all `*.h` files begin with the line `#pragma once`.
 
 ## Project usage and architecture
 
+The architecture of WarpII is described in [ARCHITECTURE.md](ARCHITECTURE.md).
+Contributes seeking an understanding of the code organization should refer there.
+
 - **Use tagged releases.** Users of WarpII should primarily be running tagged release
   versions of the code, or a build of a commit on `main`. Running simulations from
   feature branch builds is a major exception, not the norm.

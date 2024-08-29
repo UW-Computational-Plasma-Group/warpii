@@ -18,10 +18,10 @@
 #include "five_moment/extension.h"
 #include "../utilities.h"
 #include "../dgsem/nodal_dg_discretization.h"
-#include "euler.h"
+#include "five_moment/euler.h"
 #include "fluxes/subcell_finite_volume_flux.h"
 #include "solution_vec.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include "fluxes/split_form_volume_flux.h"
 #include "fluxes/jacobian_utils.h"
 #include "../dgsem/persson_peraire_shock_indicator.h"
@@ -99,7 +99,8 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         LinearAlgebra::distributed::Vector<double> &dst,
         const LinearAlgebra::distributed::Vector<double> &src,
         const std::pair<unsigned int, unsigned int> &face_range,
-        FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes) const;
+        FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes,
+        const double t) const;
 
     double compute_cell_transport_speed(
         const MatrixFree<dim, double> &mf,
@@ -177,7 +178,7 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                            const LinearAlgebra::distributed::Vector<double> &,
                            const std::pair<unsigned int, unsigned int> &)>
             boundary_operation =
-                [this, &d_dt_boundary_integrated_fluxes](
+                [this, &d_dt_boundary_integrated_fluxes, t](
                     const MatrixFree<dim, Number> &mf,
                     LinearAlgebra::distributed::Vector<double> &dst,
                     const LinearAlgebra::distributed::Vector<double> &src,
@@ -185,10 +186,10 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
             -> void {
                 if (n_species == 1) {
                     this->template local_apply_boundary_face<1>(mf, dst, src, cell_range,
-                                                    d_dt_boundary_integrated_fluxes);
+                                                    d_dt_boundary_integrated_fluxes, t);
                 } else if (n_species == 2) {
                     this->template local_apply_boundary_face<2>(mf, dst, src, cell_range,
-                                                    d_dt_boundary_integrated_fluxes);
+                                                    d_dt_boundary_integrated_fluxes, t);
                 } else {
                     Assert(false, ExcMessage("We have only templated up to n_species = 2."));
                 }
@@ -382,7 +383,8 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
     const MatrixFree<dim> &mf, LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &face_range,
-    FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes)
+    FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes,
+    const double t)
     const {
 
     // Set up FE evaluators
@@ -435,12 +437,12 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                 Tensor<1, 5, VectorizedArray<double>> w_p;
                 Tensor<1, 5, VectorizedArray<double>> numerical_flux;
                 if (bc_map.is_inflow(boundary_id)) {
-                    w_p = evaluate_function<dim, double, 5>(
+                    w_p = evaluate_function<dim, 5>(
                         *bc_map.get_inflow(boundary_id),
                         phi.quadrature_point(q));
                 } else if (bc_map.is_subsonic_outflow(boundary_id)) {
                     w_p = w_m;
-                    w_p[4] = evaluate_function<dim, double>(
+                    w_p[4] = evaluate_function<dim>(
                         *bc_map.get_subsonic_outflow_energy(boundary_id),
                         phi.quadrature_point(q), 4);
                     // at_outflow = true;
@@ -463,11 +465,11 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                     compute_from_ghost = false;
                     if (fields_enabled) {
                         numerical_flux = extension->boundary_flux(
-                                boundary_id, q, species_index, 
+                                boundary_id, q, t, species_index, 
                                 fluid_evals, *E_field_eval, *B_field_eval);
                     } else {
                         numerical_flux = extension->boundary_flux(
-                                boundary_id, q, species_index, 
+                                boundary_id, q, t, species_index, 
                                 fluid_evals);
                     }
                 } else {

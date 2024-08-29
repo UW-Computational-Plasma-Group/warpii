@@ -22,7 +22,8 @@ namespace warpii {
         prm.leave_subsection();
     }
 
-    PlasmaNormalization PlasmaNormalization::create_from_parameters(ParameterHandler &prm) {
+    PlasmaNormalization PlasmaNormalization::create_from_parameters(SimulationInput& input) {
+        ParameterHandler& prm = input.prm;
         prm.enter_subsection("Normalization");
         double omega_c_tau = prm.get_double("omega_c_tau");
         double omega_p_tau = prm.get_double("omega_p_tau");

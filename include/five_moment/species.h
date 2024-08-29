@@ -12,6 +12,7 @@
 
 #include "bc_helper.h"
 #include "species_func.h"
+#include "../simulation_input.h"
 
 using namespace dealii;
 
@@ -37,7 +38,7 @@ class Species {
                                    unsigned int n_boundaries);
 
     static std::shared_ptr<Species<dim>> create_from_parameters(
-        ParameterHandler &prm, unsigned int n_boundaries, double gas_gamma);
+        SimulationInput &input, unsigned int n_boundaries, double gas_gamma);
 
    private:
 

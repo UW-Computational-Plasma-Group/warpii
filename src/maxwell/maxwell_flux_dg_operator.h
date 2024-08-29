@@ -14,7 +14,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../dof_utils.h"
 #include "../rk.h"
-#include "../function_eval.h"
+#include "function_eval.h"
 #include "fields.h"
 #include "bc_map.h"
 #include "maxwell.h"
@@ -255,7 +255,7 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             } else if (bc_type == MaxwellBCType::DIRICHLET) {
                 const auto p = fe_eval_m.quadrature_point(q);
                 const auto& func = fields->get_bc_map().get_dirichlet_func(boundary_id);
-                val_bdy = evaluate_function<dim, VA, 8>(*func.func, p);
+                val_bdy = evaluate_function<dim, 8>(*func.func, p);
                 val_p = 2.0*val_bdy - val_m;
             }
 

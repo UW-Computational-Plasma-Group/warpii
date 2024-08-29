@@ -1,4 +1,5 @@
 #include "five_moment.h"
+#include "simulation_input.h"
 
 #include <deal.II/base/exceptions.h>
 #include <deal.II/base/utilities.h>
@@ -21,24 +22,24 @@ void FiveMomentWrapper::declare_parameters(ParameterHandler &prm) {
 }
 
 std::unique_ptr<AbstractApp> FiveMomentWrapper::create_app(
-    ParameterHandler &prm, std::string input,
+        SimulationInput& input,
     std::shared_ptr<warpii::Extension> extension) {
-    prm.parse_input_from_string(input, "", true);
+    input.reparse(false);
 
-    switch (prm.get_integer("n_dims")) {
+    switch (input.prm.get_integer("n_dims")) {
         case 1: {
             std::shared_ptr<five_moment::Extension<1>> ext = 
                 unwrap_extension<five_moment::Extension<1>>(extension);
-            FiveMomentApp<1>::declare_parameters(prm, ext);
-            prm.parse_input_from_string(input, "", false);
-            return FiveMomentApp<1>::create_from_parameters(prm, ext);
+            FiveMomentApp<1>::declare_parameters(input.prm, ext);
+            input.reparse(false);
+            return FiveMomentApp<1>::create_from_parameters(input, ext);
         }
         case 2: {
             std::shared_ptr<five_moment::Extension<2>> ext = 
                 unwrap_extension<five_moment::Extension<2>>(extension);
-            FiveMomentApp<2>::declare_parameters(prm, ext);
-            prm.parse_input_from_string(input, "", false);
-            return FiveMomentApp<2>::create_from_parameters(prm, ext);
+            FiveMomentApp<2>::declare_parameters(input.prm, ext);
+            input.reparse(false);
+            return FiveMomentApp<2>::create_from_parameters(input, ext);
         }
                 /*
         case 3: {

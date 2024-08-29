@@ -29,8 +29,7 @@ class Grid {
     Grid(std::unique_ptr<GridDescription<dim>> description)
         : description(std::move(description)) {}
 
-    static void declare_parameters(ParameterHandler& prm,
-            std::shared_ptr<GridExtension<dim>> ext);
+    static void declare_parameters(ParameterHandler& prm);
 
     static std::shared_ptr<Grid<dim>> create_from_parameters(
         ParameterHandler& prm, std::shared_ptr<GridExtension<dim>> ext);
@@ -42,13 +41,11 @@ class Grid {
     void output_svg(std::string filename);
 
    private:
-    std::shared_ptr<GridExtension<dim>> ext;
     std::unique_ptr<GridDescription<dim>> description;
 };
 
 template <int dim>
-void Grid<dim>::declare_parameters(ParameterHandler& prm,
-        std::shared_ptr<GridExtension<dim>> ext) {
+void Grid<dim>::declare_parameters(ParameterHandler& prm) {
     using ArrayPattern = Patterns::Tools::Convert<
                               std::array<unsigned int, dim>>;
     using PointPattern = Patterns::Tools::Convert<Point<dim>>;
@@ -56,8 +53,6 @@ void Grid<dim>::declare_parameters(ParameterHandler& prm,
     std::string grid_type = prm.get("GridType");
     if (grid_type == "HyperRectangle") {
         HyperRectangleDescription<dim>::declare_parameters(prm);
-    } else if (grid_type == "Extension") {
-        ext->declare_geometry_parameters(prm);
     } else {
         Assert(false, ExcMessage("No declaration for grid type"));
     }

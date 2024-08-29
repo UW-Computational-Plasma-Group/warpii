@@ -2,7 +2,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../maxwell/fields.h"
 #include "solution_vec.h"
-#include "species.h"
+#include "five_moment/species.h"
 #include "../rk.h"
 
 using namespace dealii;

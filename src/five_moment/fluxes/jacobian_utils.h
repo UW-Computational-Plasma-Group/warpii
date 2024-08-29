@@ -2,7 +2,7 @@
 
 #include <deal.II/base/tensor.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
-#include "../../tensor_utils.h"
+#include "tensor_utils.h"
 
 using namespace dealii;
 
