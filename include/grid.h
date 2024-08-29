@@ -32,7 +32,7 @@ class Grid {
     static void declare_parameters(ParameterHandler& prm);
 
     static std::shared_ptr<Grid<dim>> create_from_parameters(
-        ParameterHandler& prm, std::shared_ptr<GridExtension<dim>>);
+        ParameterHandler& prm, std::shared_ptr<GridExtension<dim>> ext);
 
     void reinit();
 

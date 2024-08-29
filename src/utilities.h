@@ -43,6 +43,9 @@ std::string remove_file_extension(std::string filename);
 
 void create_and_move_to_subdir(const std::string subdir);
 
+/**
+ * Replace all occurences of `needle` in `haystack` with `replacement`.
+ */
 void replace_all_occurences(
         const std::string& needle, 
         const std::string& replacement, 

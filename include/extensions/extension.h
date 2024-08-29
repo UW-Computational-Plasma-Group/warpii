@@ -27,6 +27,10 @@ class GridExtension {
     public:
     virtual ~GridExtension() = default;
 
+    /**
+     * Declare parameters for the grid extension, if any. This method expects to receive
+     * `prm` at the top level, and returns it to top level before exiting.
+     */
     void declare_parameters(ParameterHandler& prm) {
         prm.enter_subsection("geometry");
         if (prm.get("GridType") == "Extension") {

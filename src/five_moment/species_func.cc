@@ -126,10 +126,33 @@ Tensor<1, 5, Number> SpeciesFunc<dim>::evaluate(const Point<dim, Number>& p, dou
     return evaluate_function<dim, 5, Number>(*this, p);
 }
 
+template <>
+template<>
+Tensor<1, 5, double> SpeciesFunc<1>::evaluate<double>(const Point<1, double>& p, double t) {
+    func->set_time(t);
+    Tensor<1, 5, double> result;
+    for (unsigned int i = 0; i < 5; i++) {
+        result[i] = this->value(p, i);
+    }
+    return result;
+}
+template <>
+template<>
+Tensor<1, 5, double> SpeciesFunc<2>::evaluate<double>(const Point<2, double>& p, double t) {
+    func->set_time(t);
+    Tensor<1, 5, double> result;
+    for (unsigned int i = 0; i < 5; i++) {
+        result[i] = this->value(p, i);
+    }
+    return result;
+}
+
+
 
 template class SpeciesFunc<1>;
 template class SpeciesFunc<2>;
 template Tensor<1, 5, VectorizedArray<double>> SpeciesFunc<1>::evaluate<VectorizedArray<double>>(const Point<1, VectorizedArray<double>>& p, double t);
+template Tensor<1, 5, VectorizedArray<double>> SpeciesFunc<2>::evaluate<VectorizedArray<double>>(const Point<2, VectorizedArray<double>>& p, double t);
 
 }  // namespace five_moment
 }  // namespace warpii

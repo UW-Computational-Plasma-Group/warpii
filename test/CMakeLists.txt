@@ -21,6 +21,7 @@ set(TEST_SOURCES
     utilities_test.cc
     phmaxwell_test.cc
     bc_extension_test.cc
+    species_func_test.cc
     # Add more test files here as needed
 )
 

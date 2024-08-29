@@ -310,7 +310,8 @@ end
 class AccessesSpeciesVectorExtension : public five_moment::Extension<1> {
     public:
 
-    AccessesSpeciesVectorExtension(double expected_mass): expected_mass(expected_mass) {}
+    AccessesSpeciesVectorExtension(double expected_mass, double expected_gas_gamma): 
+        expected_mass(expected_mass), expected_gas_gamma(expected_gas_gamma) {}
 
     void prepare_boundary_flux_evaluators(
             const unsigned int,
@@ -318,6 +319,7 @@ class AccessesSpeciesVectorExtension : public five_moment::Extension<1> {
             const LinearAlgebra::distributed::Vector<double> &,
             std::array<FEFaceEvaluation<1, -1, 0, 5, double>, 1> &) override {
         ASSERT_EQ(expected_mass, get_species(0).mass);
+        ASSERT_EQ(expected_gas_gamma, gas_gamma);
     }
 
     Tensor<1, 5, VectorizedArray<double>> boundary_flux(
@@ -332,9 +334,10 @@ class AccessesSpeciesVectorExtension : public five_moment::Extension<1> {
 
     private:
     double expected_mass;
+    double expected_gas_gamma;
 };
 
-TEST(BCExtensionTest, SpeciesVecSetTest) {
+TEST(BCExtensionTest, AppValuesAreSetTest) {
     std::string input_template = R"(
 set Application = FiveMoment
 set n_dims = 1
@@ -342,6 +345,8 @@ set t_end = 0.001
 set write_output = false
 set n_boundaries = 2
 set n_species = 1
+
+set gas_gamma = 1.3
 
 subsection geometry
     set periodic_dimensions =
@@ -366,7 +371,7 @@ end
     std::stringstream reference_input;
     reference_input << input_template;
     WarpiiOpts opts;
-    auto ext = std::make_shared<AccessesSpeciesVectorExtension>(0.0089);
+    auto ext = std::make_shared<AccessesSpeciesVectorExtension>(0.0089, 1.3);
     Warpii warpii_obj(opts, ext);
     warpii_obj.opts.fpe = true;
     warpii_obj.input = reference_input.str();

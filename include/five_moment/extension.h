@@ -26,6 +26,11 @@ class Extension : public virtual warpii::Extension,
     /**
      * This function is called after the app has finished traversing the `ParameterHandler` and
      * creating objects.
+     *
+     * - Sets the instance field values of `species` and `gas_gamma` to the parsed values
+     *   which are passed in
+     * - Declares grid extension parameters
+     * - Declares BC parameters parses them with `populate_bc_from_parameters`.
      */
     void prepare_extension(SimulationInput& input,
             const std::vector<std::shared_ptr<Species<dim>>>& species,
