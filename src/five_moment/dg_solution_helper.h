@@ -13,7 +13,7 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 #include <deal.II/numerics/data_out.h>
 
-#include "../function_eval.h"
+#include "function_eval.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../grid.h"
 

@@ -1,6 +1,6 @@
 #include "explicit_source_operator.h"
 #include <deal.II/matrix_free/fe_evaluation.h>
-#include "../function_eval.h"
+#include "function_eval.h"
 #include "explicit_operator.h"
 
 namespace warpii {
@@ -136,7 +136,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
 
                 if (!(*species[i]->general_source_term).is_zero) {
                     const auto p = phi.quadrature_point(q);
-                    const auto source_val = evaluate_function<dim, double, 5>(*species[i]->general_source_term, p);
+                    const auto source_val = evaluate_function<dim, 5>(*species[i]->general_source_term, p);
                     SHOW(source_val);
                     phi.submit_value(source_val, q);
                 }
@@ -147,7 +147,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
                 field_source = 0.0;
                 if (!fields->get_general_source_term().is_zero) {
                     const auto p = field_eval->quadrature_point(q);
-                    field_source += evaluate_function<dim, double, 8>(*(fields->get_general_source_term().func), p);
+                    field_source += evaluate_function<dim, 8>(*(fields->get_general_source_term().func), p);
                 }
                 const double chi = fields->phmaxwell_constants().chi;
                 field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;

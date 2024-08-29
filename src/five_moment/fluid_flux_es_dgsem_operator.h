@@ -435,12 +435,12 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                 Tensor<1, 5, VectorizedArray<double>> w_p;
                 Tensor<1, 5, VectorizedArray<double>> numerical_flux;
                 if (bc_map.is_inflow(boundary_id)) {
-                    w_p = evaluate_function<dim, double, 5>(
+                    w_p = evaluate_function<dim, 5>(
                         *bc_map.get_inflow(boundary_id),
                         phi.quadrature_point(q));
                 } else if (bc_map.is_subsonic_outflow(boundary_id)) {
                     w_p = w_m;
-                    w_p[4] = evaluate_function<dim, double>(
+                    w_p[4] = evaluate_function<dim>(
                         *bc_map.get_subsonic_outflow_energy(boundary_id),
                         phi.quadrature_point(q), 4);
                     // at_outflow = true;

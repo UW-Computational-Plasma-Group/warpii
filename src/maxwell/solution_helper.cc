@@ -7,7 +7,7 @@
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/operators.h>
 
-#include "../function_eval.h"
+#include "function_eval.h"
 namespace warpii {
 namespace maxwell {
 
@@ -29,7 +29,7 @@ void PHMaxwellSolutionHelper<dim>::project_field_quantities(
         phi.reinit(cell);
         for (const unsigned int q : phi.quadrature_point_indices()) {
             const auto p = phi.quadrature_point(q);
-            Tensor<1, 8, VectorizedArray<double>> val = evaluate_function<dim, VA, 8>(*func.func, p);
+            Tensor<1, 8, VectorizedArray<double>> val = evaluate_function<dim, 8>(*func.func, p);
             phi.submit_dof_value(val, q);
         }
         inverse.transform_from_q_points_to_basis(8, phi.begin_dof_values(),
