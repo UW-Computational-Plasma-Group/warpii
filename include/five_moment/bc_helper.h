@@ -38,6 +38,9 @@ class EulerBCMap {
     const std::map<types::boundary_id, std::shared_ptr<Function<dim>>>& subsonic_outflow_boundaries() const {
         return _subsonic_outflow_boundaries;
     }
+    const std::set<types::boundary_id>& extension_boundaries() const {
+        return _extension_boundaries;
+    }
 
     private:
     std::map<types::boundary_id, std::shared_ptr<Function<dim>>>
@@ -47,7 +50,7 @@ class EulerBCMap {
     std::set<types::boundary_id> supersonic_outflow_boundaries;
     std::set<types::boundary_id> axial_boundaries;
     std::set<types::boundary_id> wall_boundaries;
-    std::set<types::boundary_id> extension_boundaries;
+    std::set<types::boundary_id> _extension_boundaries;
 
     // Helper set of the boundary ids that are already spoken for.
     std::set<types::boundary_id> set_boundary_ids;
@@ -133,7 +136,7 @@ void EulerBCMap<dim>::set_extension_boundary(
                            "it as an extension boundary"));
 
     set_boundary_ids.insert(boundary_id);
-    extension_boundaries.insert(boundary_id);
+    _extension_boundaries.insert(boundary_id);
 }
 
 template <int dim>
@@ -158,5 +161,5 @@ bool EulerBCMap<dim>::is_wall(const types::boundary_id boundary_id) const {
 }
 template <int dim>
 bool EulerBCMap<dim>::is_extension_bc(const types::boundary_id boundary_id) const {
-    return extension_boundaries.find(boundary_id) != extension_boundaries.end();
+    return _extension_boundaries.find(boundary_id) != _extension_boundaries.end();
 }
