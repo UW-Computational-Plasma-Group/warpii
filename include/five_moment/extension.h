@@ -84,6 +84,9 @@ class Extension : public virtual warpii::Extension,
 
     N_SPECIES_DECLS(1)
     N_SPECIES_DECLS(2)
+
+   private:
+    std::unique_ptr<FiveMomentApp<dim>>;
 };
 
 #define PREPARE_BOUNDARY_FLUX_EVALUATORS_IMPL(n_species) \
