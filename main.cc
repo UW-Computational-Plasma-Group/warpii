@@ -2,7 +2,7 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/parameter_handler.h>
 #include "src/input_file.h"
-#include "src/warpii.h"
+#include "warpii.h"
 
 #include <iostream>
 

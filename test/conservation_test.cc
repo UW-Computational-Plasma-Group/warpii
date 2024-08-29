@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "src/five_moment/five_moment.h"
-#include "src/warpii.h"
+#include "warpii.h"
 
 using namespace dealii;
 using namespace warpii;

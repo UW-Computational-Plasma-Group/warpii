@@ -35,6 +35,10 @@ find_package(deal.II $ENV{DEALII_VERSION} REQUIRED)
 set(DEAL_II_WITH_MPI ON)
 deal_ii_initialize_cached_variables()
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ TYPE INCLUDE)
+
 ####
 ####  Our own source tree and main executable
 ####

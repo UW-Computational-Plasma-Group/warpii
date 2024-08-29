@@ -29,3 +29,4 @@ add_library(libwarpii
     )
 deal_ii_setup_target(libwarpii)
 
+install(TARGETS libwarpii)

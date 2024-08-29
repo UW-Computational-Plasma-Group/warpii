@@ -58,8 +58,13 @@ $(WARPIISOFT):
 builds/$(WARPII_CMAKE_PRESET)/CMakeFiles: check-env CMakePresets.json CMakeLists.txt cmake
 	cmake --preset $(WARPII_CMAKE_PRESET)
 
+.PHONY: build
 build: check-env src codes builds/$(WARPII_CMAKE_PRESET)/CMakeFiles
 	source warpii.env && cmake --build --preset $(WARPII_CMAKE_PRESET) --parallel $(CMAKE_BUILD_PARALLEL_LEVEL)
+
+.PHONY: install
+install:
+	source warpii.env && cmake --install builds/$(WARPII_CMAKE_PRESET)
 
 test: check-env build doc
 	cd builds/$(WARPII_CMAKE_PRESET) \
