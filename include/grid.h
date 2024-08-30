@@ -53,8 +53,10 @@ void Grid<dim>::declare_parameters(ParameterHandler& prm) {
     std::string grid_type = prm.get("GridType");
     if (grid_type == "HyperRectangle") {
         HyperRectangleDescription<dim>::declare_parameters(prm);
+    } else if (grid_type == "Extension") {
+        // No-op. The parameters will be declared later by the extension.
     } else {
-        Assert(false, ExcMessage("No declaration for grid type"));
+        AssertThrow(false, ExcMessage("No declaration for grid type"));
     }
     prm.leave_subsection();  // geometry
 }
