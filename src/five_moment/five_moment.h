@@ -163,7 +163,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
         prm.leave_subsection();
     }
     auto fields = PHMaxwellFields<dim>::create_from_parameters(
-            prm, n_boundaries, plasma_norm);
+            input, n_boundaries, plasma_norm);
 
     auto grid = Grid<dim>::create_from_parameters(prm, 
             std::static_pointer_cast<GridExtension<dim>>(ext));
