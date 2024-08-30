@@ -77,8 +77,6 @@ double FiveMomentDGSolutionHelper<dim>::compute_global_error(
     LinearAlgebra::distributed::Vector<double>& solution, 
     Function<dim>& f,
     unsigned int component) {
-    AssertThrow(f.n_components == 5, 
-            ExcMessage("The function provided to compare against must have 5 components."));
     Vector<double> difference;
     auto select = ComponentSelectFunction<dim, double>(component, discretization->get_n_components());
     VectorTools::integrate_difference(

@@ -137,7 +137,6 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
                 if (!(*species[i]->general_source_term).is_zero) {
                     const auto p = phi.quadrature_point(q);
                     const auto source_val = evaluate_function<dim, 5>(*species[i]->general_source_term, p);
-                    SHOW(source_val);
                     phi.submit_value(source_val, q);
                 }
             }
