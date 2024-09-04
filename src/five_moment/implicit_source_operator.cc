@@ -5,7 +5,7 @@
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/matrix_free/matrix_free.h>
 
-#include "../utilities.h"
+#include "utilities.h"
 
 using namespace dealii;
 

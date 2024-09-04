@@ -14,7 +14,7 @@
 #include <algorithm>
 
 #include "../../dof_utils.h"
-#include "../../utilities.h"
+#include "utilities.h"
 #include "../dg_solution_helper.h"
 #include "../../dgsem/nodal_dg_discretization.h"
 #include "five_moment/euler.h"

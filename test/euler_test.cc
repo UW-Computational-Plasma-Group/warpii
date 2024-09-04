@@ -1,6 +1,6 @@
 #include "five_moment/euler.h"
 #include "euler_test_helpers.h"
-#include "src/utilities.h"
+#include "utilities.h"
 
 #include <gtest/gtest.h>
 
