@@ -1,7 +1,7 @@
 #pragma once
 
 #include "deal.II/base/tensor.h"
-#include "../geometry.h"
+#include "geometry.h"
 
 using namespace dealii;
 

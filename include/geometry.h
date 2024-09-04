@@ -34,7 +34,7 @@ std::pair<Tensor<1, 3, Number>, Tensor<1, 3, Number>> tangent_and_binormal(
         // By the Brouwer fixed point theorem, no continuous mapping from S^2 to itself
         // can avoid having a fixed point. This introduced a discontinuity if it detects
         // that n is at the fixed point.
-        if (std::abs(a * n) >= 0.9) {
+        if (std::abs(a * n)[v] >= 0.9) {
             a[1] = Number(1.);
             a[2] = Number(0.);
         }

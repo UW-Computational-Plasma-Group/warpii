@@ -18,7 +18,7 @@
 #include "fields.h"
 #include "bc_map.h"
 #include "maxwell.h"
-#include "../geometry.h"
+#include "geometry.h"
 
 using namespace dealii;
 
