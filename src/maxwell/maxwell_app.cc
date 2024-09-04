@@ -67,7 +67,7 @@ std::unique_ptr<PHMaxwellApp<dim>> PHMaxwellApp<dim>::create_from_parameters(
     PlasmaNormalization plasma_norm =
         PlasmaNormalization::create_from_parameters(input);
     auto fields = PHMaxwellFields<dim>::create_from_parameters(
-        prm, n_boundaries, plasma_norm);
+        input, n_boundaries, plasma_norm);
     auto grid = Grid<dim>::create_from_parameters(
         prm, std::make_shared<GridExtension<dim>>());
 

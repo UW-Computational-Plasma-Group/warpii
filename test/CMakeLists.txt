@@ -15,6 +15,7 @@ set(TEST_SOURCES
     timestepper_test.cc
     euler_test.cc
     conservation_test.cc
+    current_drive_test.cc
     dof_utils_test.cc
     plasma_waves_test.cc
     shock_capturing_fv_test.cc

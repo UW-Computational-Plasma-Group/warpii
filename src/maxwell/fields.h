@@ -33,7 +33,7 @@ class PHMaxwellFields {
     static void declare_parameters(ParameterHandler& prm,
             unsigned int n_boundaries);
 
-    static std::shared_ptr<PHMaxwellFields> create_from_parameters(ParameterHandler &prm, 
+    static std::shared_ptr<PHMaxwellFields> create_from_parameters(SimulationInput &input, 
             unsigned int n_boundaries,
             PlasmaNormalization plasma_norm);
 

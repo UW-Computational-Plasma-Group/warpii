@@ -33,7 +33,7 @@ The spatial coordinates are defined as variables `x, y, z`, and time as the vari
 
 template <int dim>
 PHMaxwellFunc<dim> PHMaxwellFunc<dim>::create_from_parameters(
-    ParameterHandler& prm) {
+    SimulationInput& input) {
     std::map<std::string, double> constants;
     constants["pi"] = numbers::PI;
 
@@ -52,8 +52,8 @@ PHMaxwellFunc<dim> PHMaxwellFunc<dim>::create_from_parameters(
             AssertThrow(false, ExcNotImplemented());
             break;
     }
-    std::string expression = prm.get("components");
-    std::string constants_list = prm.get("constants");
+    std::string expression = input.get_with_subexpression_substitutions("components");
+    std::string constants_list = input.get_with_subexpression_substitutions("constants");
 
     std::vector<std::string> const_list =
         Utilities::split_string_list(constants_list, ',');

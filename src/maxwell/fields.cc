@@ -51,20 +51,22 @@ void PHMaxwellFields<dim>::declare_parameters(ParameterHandler &prm,
 
 template <int dim>
 std::shared_ptr<PHMaxwellFields<dim>>
-PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
+PHMaxwellFields<dim>::create_from_parameters(SimulationInput &input,
                                              unsigned int n_boundaries,
                                              PlasmaNormalization plasma_norm) {
+    ParameterHandler& prm = input.prm;
+
     prm.enter_subsection("PHMaxwellFields");
 
     double phmaxwell_gamma = prm.get_double("phmaxwell_gamma");
     double phmaxwell_chi = prm.get_double("phmaxwell_chi");
 
     prm.enter_subsection("InitialCondition");
-    const auto ic = PHMaxwellFunc<dim>::create_from_parameters(prm);
+    const auto ic = PHMaxwellFunc<dim>::create_from_parameters(input);
     prm.leave_subsection();
 
     prm.enter_subsection("GeneralSourceTerm");
-    const auto source = PHMaxwellFunc<dim>::create_from_parameters(prm);
+    const auto source = PHMaxwellFunc<dim>::create_from_parameters(input);
     prm.leave_subsection();
 
     MaxwellBCMap<dim> bc_map;
@@ -79,7 +81,7 @@ PHMaxwellFields<dim>::create_from_parameters(ParameterHandler &prm,
             bc_map.set_perfect_conductor_boundary(boundary_id);
         } else if (bc_type == "Dirichlet") {
             prm.enter_subsection("DirichletFunction");
-            auto func = PHMaxwellFunc<dim>::create_from_parameters(prm);
+            auto func = PHMaxwellFunc<dim>::create_from_parameters(input);
             prm.leave_subsection();
             bc_map.set_dirichlet_boundary(boundary_id, std::move(func));
         }
