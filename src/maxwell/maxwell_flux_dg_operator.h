@@ -238,6 +238,8 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
 
             if (bc_type == MaxwellBCType::COPY_OUT) {
                 val_p = val_m;
+                val_p[6] = -val_m[6];
+                val_p[7] = -val_m[7];
             } else if (bc_type == MaxwellBCType::PERFECT_CONDUCTOR) {
                 // Just the normal component of E
                 const auto E_bdy = (n3d * E_m) * n3d;
