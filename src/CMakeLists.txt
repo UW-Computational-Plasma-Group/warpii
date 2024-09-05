@@ -3,6 +3,7 @@ add_library(libwarpii
     common_params.cc
     input_file.cc
     timestepper.cc
+    geometry.cc
     grid.cc
     grid_descriptions.cc
     grid_generation.cc

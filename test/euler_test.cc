@@ -280,3 +280,107 @@ TEST(EulerFluxTests, EntropyDissipationTest2D) {
         EXPECT_LE(r, 0.0);
     }
 }
+
+TEST(EulerFluxTests, RoeFlux1D) {
+    double gamma = 5.0 / 3.0;
+    Tensor<1, 5, double> q_in({1.0, 0.0, 0.0, 0.0, 1.0});
+    Tensor<1, 5, double> q_out({0.1, 0.0, 0.0, 0.0, 0.1});
+    Tensor<1, 1, double> n({1.0});
+
+    auto flux = euler_roe_flux<1>(q_in, q_out, n, gamma, false);
+    // Definitely the mass flux should be positive.
+    ASSERT_GT(flux[0], 0.0);
+
+    // The function should give the outward directed flux no matter the orientation of n
+    flux = euler_roe_flux<1>(q_in, q_out, Tensor<1, 1, double>({-1.0}), gamma, false);
+    ASSERT_GT(flux[0], 0.0);
+
+    q_in = Tensor<1, 5, double>({1.0, 1.0, 0.0, 0.0, 1.0});
+    q_out = Tensor<1, 5, double>({1.0, 1.0, 0.0, 0.0, 1.0});
+
+    flux = euler_roe_flux<1>(q_in, q_out, Tensor<1, 1, double>({1.0}), gamma, false);
+    ASSERT_GT(flux[0], 0.0);
+
+    flux = euler_roe_flux<1>(q_in, q_out, Tensor<1, 1, double>({-1.0}), gamma, false);
+    ASSERT_LT(flux[0], 0.0);
+}
+
+// qL and qR are [p, rho, u]
+void test_roe_property_1d_x(Tensor<1, 3, double> qL, Tensor<1, 3, double> qR, 
+        double n, double gamma) {
+    double pR = qR[0];
+    double rhoR = qR[1];
+    double uR = qR[2];
+    double pL = qL[0];
+    double rhoL = qL[1];
+    double uL = qL[2];
+    double eR = (1.0 / (gamma - 1.0)) * pR + 0.5 * uR * uR * rhoR;
+    double eL = (1.0 / (gamma - 1.0)) * pL + 0.5 * uL * uL * rhoL;
+
+    Tensor<1, 5, double> region_L({rhoL, rhoL*uL, 0.0, 0.0, eL});
+    SHOW(region_L);
+    Tensor<1, 5, double> region_R({rhoR, rhoR*uR, 0.0, 0.0, eR});
+    SHOW(region_R);
+
+    Tensor<1, 1, double> normal({n});
+    const auto FL = euler_flux<1>(region_L, gamma) * normal;
+    const auto FR = euler_flux<1>(region_R, gamma) * normal;
+
+    const auto flux_jump = FR - FL;
+    SHOW(flux_jump);
+    const auto jump = region_R - region_L;
+    SHOW(jump);
+    ASSERT_NEAR(flux_jump[0] / jump[0], flux_jump[1] / jump[1], 1e-14);
+    ASSERT_NEAR(flux_jump[0] / jump[0], flux_jump[4] / jump[4], 1e-14);
+    const auto s = flux_jump[0] / jump[0];
+
+    const auto roe_flux = euler_roe_flux<1>(region_L, region_R, normal, gamma, true);
+
+    const auto avg_flux = 0.5 * (FL + FR);
+    SHOW(roe_flux - avg_flux);
+    const auto viscous_correction = roe_flux - avg_flux;
+    const auto expected = -0.5 * s * jump;
+
+    SHOW(viscous_correction);
+    SHOW(expected);
+    for (unsigned int i = 0; i < 5; i++) {
+        ASSERT_NEAR(viscous_correction[i], expected[i], 1e-14);
+    }
+}
+
+// Values are computed using SodShockTube.jl
+TEST(EulerFluxTests, RoeFluxHasRoeProperty) {
+    // Classic Sod shocktube
+    double gamma = 1.4;
+    double p4 = 0.30313017804679177;
+    double u4 = 0.9274526200369384;
+    double rho4 = 0.2655737117032393;
+
+    double p5 = 0.1;
+    double u5 = 0.0;
+    double rho5 = 0.125;
+
+    test_roe_property_1d_x(Tensor<1, 3, double>({p4, rho4, u4}), 
+            Tensor<1, 3, double>({p5, rho5, u5}), 
+            1.0, gamma);
+
+    test_roe_property_1d_x(
+            Tensor<1, 3, double>({p4, rho4, -u4}), 
+            Tensor<1, 3, double>({p5, rho5, u5}), 
+            -1.0, gamma);
+
+    // Contact discontinuity
+    double p3 = p4;
+    double u3 = u4;
+    double rho3 = 0.42631942817462254;
+
+    test_roe_property_1d_x(Tensor<1, 3, double>({p3, rho3, u3}), 
+            Tensor<1, 3, double>({p4, rho4, u4}), 
+            1.0, gamma);
+
+    test_roe_property_1d_x(
+            Tensor<1, 3, double>({p3, rho3, -u3}), 
+            Tensor<1, 3, double>({p4, rho4, -u4}), 
+            -1.0, gamma);
+}
+

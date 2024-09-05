@@ -17,6 +17,9 @@ Tensor<1, 3, Number> at_least_3d(Tensor<1, dim, Number> n) {
     return result;
 }
 
+std::pair<Tensor<1, 3, double>, Tensor<1, 3, double>> tangent_and_binormal(
+    const Tensor<1, 3, double> n);
+
 /**
  * Given a normal vector to a plane, computes two basis vectors for that plane,
  * which we call the tangent and binormal vectors.
