@@ -51,6 +51,11 @@ void Species<dim>::declare_parameters(ParameterHandler &prm,
     prm.leave_subsection();
 
     prm.enter_subsection("GeneralSourceTerm");
+    prm.declare_entry("Type", "Simple", Patterns::Selection("Simple|Extension"),
+            R"(The type of source term.
+- `Simple`: A standard SpeciesFunc with five components.
+- `Extension`: An extension.
+)");
     SpeciesFunc<dim>::declare_parameters(prm);
     prm.leave_subsection();
 }
@@ -89,11 +94,13 @@ std::shared_ptr<Species<dim>> Species<dim>::create_from_parameters(
     std::unique_ptr<SpeciesFunc<dim>> initial_condition = SpeciesFunc<dim>::create_from_parameters(input, gas_gamma);
     prm.leave_subsection();
     prm.enter_subsection("GeneralSourceTerm");
+    bool has_extension_source_term = prm.get("Type") == "Extension";
     std::unique_ptr<SpeciesFunc<dim>> source_term = SpeciesFunc<dim>::create_from_parameters(input, gas_gamma);
     prm.leave_subsection();
 
     return std::make_shared<Species<dim>>(name, charge, mass, bc_map,
                                           std::move(initial_condition), 
+                                          has_extension_source_term,
                                           std::move(source_term));
 }
 

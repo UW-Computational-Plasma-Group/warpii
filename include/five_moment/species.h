@@ -25,12 +25,14 @@ class Species {
     Species(std::string name, double charge, double mass,
             EulerBCMap<dim> bc_map, 
             std::unique_ptr<SpeciesFunc<dim>> initial_condition,
+            bool has_extension_source_term,
             std::unique_ptr<SpeciesFunc<dim>> general_source_term)
         : name(name),
           charge(charge),
           mass(mass),
           bc_map(bc_map),
           initial_condition(std::move(initial_condition)),
+          has_extension_source_term(has_extension_source_term),
           general_source_term(std::move(general_source_term))
     {}
 
@@ -48,6 +50,7 @@ class Species {
     double mass;
     EulerBCMap<dim> bc_map;
     std::unique_ptr<SpeciesFunc<dim>> initial_condition;
+    bool has_extension_source_term;
     std::unique_ptr<SpeciesFunc<dim>> general_source_term;
 };
 
