@@ -137,6 +137,9 @@ Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
     declare_t_end(prm);
     declare_write_output(prm);
     declare_n_writeout_frames(prm);
+
+    prm.declare_entry("ExplicitIntegrator", "RK1", Patterns::Selection("RK1|SSPRK2"),
+            "The type of integrator to use for the explicit time marching of the flux terms.");
 }
 
 template <int dim>
@@ -181,9 +184,12 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     auto discretization = std::make_shared<NodalDGDiscretization<dim>>(
         grid, n_components, fe_degree);
 
+    const auto integrator_type = prm.get("ExplicitIntegrator");
+
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
         ext, discretization, species, fields, plasma_norm, gas_gamma, 
-        t_end, n_boundaries, fields_enabled);
+        t_end, n_boundaries, fields_enabled, integrator_type);
+
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,
                                                     grid, std::move(dg_solver),

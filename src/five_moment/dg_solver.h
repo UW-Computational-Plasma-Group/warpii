@@ -28,6 +28,18 @@ using namespace dealii;
 namespace warpii {
 namespace five_moment {
 
+template <int dim>
+std::shared_ptr<SSPRKIntegrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>>
+create_integrator(const std::string& type) {
+    if (type == "RK1") {
+        return std::make_shared<RK1Integrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>>();
+    } else if (type == "SSPRK2") {
+        return std::make_shared<SSPRK2Integrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>>();
+    } else {
+        AssertThrow(false, ExcMessage("Unknown type of integrator: " + type));
+    }
+}
+
 /**
  * The DGSolver for the Five-Moment application.
  *
@@ -47,7 +59,8 @@ class FiveMomentDGSolver {
         double gas_gamma,
         double t_end,
         unsigned int n_boundaries,
-        bool fields_enabled)
+        bool fields_enabled,
+        const std::string& integrator_type)
         : t_end(t_end),
           discretization(discretization),
           solution_helper(species.size(), discretization),
@@ -57,7 +70,8 @@ class FiveMomentDGSolver {
                   fields, plasma_norm, fields_enabled),
           implicit_source_operator(plasma_norm, species, discretization, fields_enabled),
           n_boundaries(n_boundaries),
-          fields_enabled(fields_enabled)
+          fields_enabled(fields_enabled),
+          ssp_integrator(create_integrator<dim>(integrator_type))
         {}
 
     void reinit();
@@ -78,11 +92,11 @@ class FiveMomentDGSolver {
     std::shared_ptr<PHMaxwellFields<dim>> fields;
     FiveMSolutionVec solution;
 
-    SSPRK2Integrator<double, FiveMSolutionVec, FiveMomentExplicitOperator<dim>> ssp_integrator;
     FiveMomentExplicitOperator<dim> explicit_operator;
     FiveMomentImplicitSourceOperator<dim> implicit_source_operator;
     unsigned int n_boundaries;
     bool fields_enabled;
+    std::shared_ptr<SSPRKIntegrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>> ssp_integrator;
 };
 
 }  // namespace five_moment

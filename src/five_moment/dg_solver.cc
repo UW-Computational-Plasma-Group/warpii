@@ -8,7 +8,7 @@ void FiveMomentDGSolver<dim>::reinit() {
     discretization->reinit();
     discretization->perform_allocation(solution.mesh_sol);
     solution.boundary_integrated_fluxes.reinit(n_boundaries, dim);
-    ssp_integrator.reinit(solution, 3);
+    ssp_integrator->reinit(solution, 3);
 }
 
 template <int dim>
@@ -27,7 +27,7 @@ void FiveMomentDGSolver<dim>::project_initial_condition() {
 template <int dim>
 void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback) {
     auto step = [&](double t, double dt) -> bool {
-        ssp_integrator.evolve_one_time_step(explicit_operator, solution, dt, t);
+        ssp_integrator->evolve_one_time_step(explicit_operator, solution, dt, t);
         implicit_source_operator.evolve_one_time_step(solution.mesh_sol, dt);
 
         std::cout << "t = " << t << std::endl;

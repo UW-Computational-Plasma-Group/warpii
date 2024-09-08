@@ -3,6 +3,7 @@
 #include "../maxwell/fields.h"
 #include "solution_vec.h"
 #include "five_moment/species.h"
+#include "five_moment/extension.h"
 #include "../rk.h"
 
 using namespace dealii;
@@ -15,12 +16,14 @@ class FiveMomentExplicitSourceOperator
     : public ForwardEulerOperator<FiveMSolutionVec> {
    public:
     FiveMomentExplicitSourceOperator(
+        std::shared_ptr<five_moment::Extension<dim>> extension,
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
         std::vector<std::shared_ptr<Species<dim>>> species,
         std::shared_ptr<PHMaxwellFields<dim>> fields,
         PlasmaNormalization plasma_norm,
         bool fields_enabled)
-        : discretization(discretization),
+        : extension(extension),
+          discretization(discretization),
           species(species),
           fields(fields),
           plasma_norm(plasma_norm),
@@ -47,6 +50,7 @@ class FiveMomentExplicitSourceOperator
         const std::pair<unsigned int, unsigned int> &cell_range);
 
 
+    std::shared_ptr<five_moment::Extension<dim>> extension;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
     std::vector<std::shared_ptr<Species<dim>>> species;
     std::shared_ptr<PHMaxwellFields<dim>> fields;

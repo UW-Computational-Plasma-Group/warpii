@@ -10,6 +10,8 @@ void FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
     FiveMSolutionVec &dst, const FiveMSolutionVec &u,
     std::vector<FiveMSolutionVec> &sol_registers, const double dt,
     const double t, const double b, const double a, const double c) {
+    //AssertThrow(&dst != &u, ExcMessage("dst and u must not alias each other."));
+
     // dst1 = b*dst + a*u + c*dt*f1(u)
     fluid_flux.perform_forward_euler_step(dst, u, sol_registers, dt, t, b, a, c);
 

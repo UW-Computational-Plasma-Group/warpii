@@ -15,10 +15,12 @@ set Application = FiveMoment
 set n_dims = 1
 set fe_degree = 1
 
+set ExplicitIntegrator = RK1
+
 subsection geometry
     set left = 0
     set right = 1
-    set nx = 1
+    set nx = 3
 end
 
 set n_species = 2
