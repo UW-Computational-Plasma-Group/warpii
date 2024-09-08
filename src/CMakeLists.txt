@@ -9,6 +9,7 @@ add_library(libwarpii
     grid_generation.cc
     dof_utils.cc
     five_moment/dg_solution_helper.cc
+    five_moment/cell_evaluators.cc
     five_moment/dg_solver.cc
     five_moment/five_moment.cc
     five_moment/explicit_operator.cc

@@ -23,6 +23,7 @@ set(TEST_SOURCES
     phmaxwell_test.cc
     bc_extension_test.cc
     species_func_test.cc
+    cell_evaluators_test.cc
     # Add more test files here as needed
 )
 
