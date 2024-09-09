@@ -49,6 +49,11 @@ class Extension : public virtual warpii::Extension,
                 declare_bc_parameters(input.prm, i, boundary_id);
                 input.prm.leave_subsection();
             }
+            input.prm.enter_subsection("GeneralSourceTerm");
+            if (input.prm.get("Type") == "Extension") {
+                declare_source_parameters(input.prm, i);
+            }
+            input.prm.leave_subsection();
             input.prm.leave_subsection();
         }
 
@@ -63,8 +68,14 @@ class Extension : public virtual warpii::Extension,
                 populate_bc_from_parameters(input, i, boundary_id);
                 input.prm.leave_subsection();
             }
+            input.prm.enter_subsection("GeneralSourceTerm");
+            if (input.prm.get("Type") == "Extension") {
+                populate_source_from_parameters(input, i);
+            }
+            input.prm.leave_subsection();
             input.prm.leave_subsection();
         }
+
     }
 
     virtual void declare_source_parameters(ParameterHandler& prm,
