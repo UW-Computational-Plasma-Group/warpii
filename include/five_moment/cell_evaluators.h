@@ -58,6 +58,15 @@ class FiveMomentCellEvaluators {
         return _species_evals.at(i);
     }
 
+    const FEEvaluation<dim, -1, 0, 8, double>& field_eval() const {
+        AssertThrow(fields_enabled, ExcMessage("Fields are not enabled."));
+        return *_field_eval;
+    }
+
+    const FEEvaluation<dim, -1, 0, 5, double>& species_eval(unsigned int i) const {
+        return _species_evals.at(i);
+    }
+
    private:
     const LinearAlgebra::distributed::Vector<double> &src;
     unsigned int n_species;
