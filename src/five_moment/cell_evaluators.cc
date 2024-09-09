@@ -12,7 +12,6 @@ void FiveMomentCellEvaluators<dim>::ensure_species_evaluated(
     unsigned int species, unsigned int cell,
     EvaluationFlags::EvaluationFlags flags) {
 
-    std::cout << species_eval_states.size() << std::endl;
     const auto state = species_eval_states.at(species);
     auto& phi = species_eval(species);
 
