@@ -103,7 +103,7 @@ Tensor<1, 8, Number> ph_maxwell_numerical_flux(
     const auto E_jump_cross_n = cross_product_3d(E_p - E_m, n);
 
     const auto E_avg_dot_n = 0.5 * (E_m + E_p) * n;
-    const auto B_avg_dot_n = 0.5 * (E_m + E_p) * n;
+    const auto B_avg_dot_n = 0.5 * (B_m + B_p) * n;
     const auto E_jump_dot_n = (E_p - E_m) * n;
     const auto B_jump_dot_n = (B_p - B_m) * n;
 
