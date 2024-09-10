@@ -69,11 +69,11 @@ end
     ASSERT_NO_THROW(evaluators.species_eval(1).get_value(0));
 
     evaluators.ensure_fields_evaluated(0, EvaluationFlags::values);
-    ASSERT_NO_THROW(evaluators.field_eval().get_value(0));
+    ASSERT_NO_THROW(evaluators.field_eval()->get_value(0));
 
     evaluators.ensure_species_evaluated(1, 0, EvaluationFlags::values);
     ASSERT_NO_THROW(evaluators.species_eval(1).get_value(0));
 
     evaluators.ensure_fields_evaluated(1, EvaluationFlags::values);
-    ASSERT_NO_THROW(evaluators.field_eval().get_value(0));
+    ASSERT_NO_THROW(evaluators.field_eval()->get_value(0));
 }
