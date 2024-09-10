@@ -79,7 +79,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_inverse_mass_matrix(
         }
     }
 
-    if (fields_enabled && !fields->get_general_source_term().is_zero) {
+    if (fields_enabled) {
         FEEvaluation<dim, -1, 0, 8, double> phi(mf, 0, 1,
                                                       5*species.size());
         MatrixFreeOperators::CellwiseInverseMassMatrix<dim, -1, 8, double>
