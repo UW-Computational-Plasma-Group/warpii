@@ -155,12 +155,12 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
                 Tensor<1, 8, VectorizedArray<double>> field_source;
                 field_source = 0.0;
                 if (nonzero_field_general_source_term) {
-                    const auto p = evaluators.field_eval().quadrature_point(q);
+                    const auto p = evaluators.field_eval()->quadrature_point(q);
                     field_source += evaluate_function<dim, 8>(*(fields->get_general_source_term().func), p);
                 }
                 const double chi = fields->phmaxwell_constants().chi;
                 field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;
-                evaluators.field_eval().submit_value(field_source, q);
+                evaluators.field_eval()->submit_value(field_source, q);
             }
         }
 
@@ -171,7 +171,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
             }
         }
         if (fields_enabled) {
-            evaluators.field_eval().integrate_scatter(EvaluationFlags::values, dst);
+            evaluators.field_eval()->integrate_scatter(EvaluationFlags::values, dst);
         }
     }
 }

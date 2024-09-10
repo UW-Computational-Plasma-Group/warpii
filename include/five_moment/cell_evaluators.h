@@ -49,18 +49,18 @@ class FiveMomentCellEvaluators {
     void ensure_fields_evaluated(unsigned int cell, 
             EvaluationFlags::EvaluationFlags flags);
 
-    FEEvaluation<dim, -1, 0, 8, double>& field_eval() {
+    std::optional<FEEvaluation<dim, -1, 0, 8, double>>& field_eval() {
         AssertThrow(fields_enabled, ExcMessage("Fields are not enabled."));
-        return *_field_eval;
+        return _field_eval;
     }
 
     FEEvaluation<dim, -1, 0, 5, double>& species_eval(unsigned int i) {
         return _species_evals.at(i);
     }
 
-    const FEEvaluation<dim, -1, 0, 8, double>& field_eval() const {
+    const std::optional<FEEvaluation<dim, -1, 0, 8, double>>& field_eval() const {
         AssertThrow(fields_enabled, ExcMessage("Fields are not enabled."));
-        return *_field_eval;
+        return _field_eval;
     }
 
     const FEEvaluation<dim, -1, 0, 5, double>& species_eval(unsigned int i) const {

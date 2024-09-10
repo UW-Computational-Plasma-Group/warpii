@@ -45,12 +45,12 @@ void FiveMomentCellEvaluators<dim>::ensure_fields_evaluated(
         if (state_flags | flags == state_flags) {
             return;
         } else {
-            phi.gather_evaluate(src, state_flags | flags);
+            phi->gather_evaluate(src, state_flags | flags);
         }
         field_eval_state = std::make_optional(std::make_pair(cell, state_flags | flags));
     } else {
-        phi.reinit(cell);
-        phi.gather_evaluate(src, flags);
+        phi->reinit(cell);
+        phi->gather_evaluate(src, flags);
         field_eval_state = std::make_optional(std::make_pair(cell, flags));
     }
 
