@@ -30,7 +30,11 @@ void FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
 
 template <int dim>
 double FiveMomentExplicitOperator<dim>::recommend_dt(const MatrixFree<dim>& mf, const FiveMSolutionVec& soln) {
-    return fluid_flux.recommend_dt(mf, soln);
+    auto dt = fluid_flux.recommend_dt(mf, soln);
+    if (fields_enabled) {
+        dt = std::min(dt, maxwell_flux.recommend_dt(mf, soln));
+    }
+    return dt;
 }
 
 template class FiveMomentExplicitOperator<1>;
