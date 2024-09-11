@@ -78,7 +78,7 @@ class FiveMomentDGSolver {
 
     void project_initial_condition();
 
-    void solve(TimestepCallback callback);
+    void solve(TimestepCallback writeout_callback, TimestepCallback diagnostic_callback);
 
     FiveMomentDGSolutionHelper<dim>& get_solution_helper();
 

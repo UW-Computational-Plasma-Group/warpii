@@ -25,7 +25,8 @@ void FiveMomentDGSolver<dim>::project_initial_condition() {
 }
 
 template <int dim>
-void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback) {
+void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback, 
+        TimestepCallback diagnostic_callback) {
     auto step = [&](double t, double dt) -> bool {
         ssp_integrator->evolve_one_time_step(explicit_operator, solution, dt, t);
         implicit_source_operator.evolve_one_time_step(solution.mesh_sol, dt);
@@ -38,7 +39,7 @@ void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback) {
             discretization->get_matrix_free(), solution);
     };
 
-    std::vector<TimestepCallback> callbacks = {writeout_callback};
+    std::vector<TimestepCallback> callbacks = {writeout_callback, diagnostic_callback};
     advance(step, t_end, recommend_dt, callbacks);
 }
 
