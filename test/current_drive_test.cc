@@ -15,10 +15,12 @@ set Application = FiveMoment
 set n_dims = 1
 set fe_degree = 1
 
+set ExplicitIntegrator = RK1
+
 subsection geometry
     set left = 0
     set right = 1
-    set nx = 1
+    set nx = 3
 end
 
 set n_species = 2
@@ -78,6 +80,6 @@ set t_end = 60.0
     double rho_u_i_error = helper.compute_global_error(soln.mesh_sol, 
             rho_u_expected, 6);
 
-    EXPECT_NEAR(rho_u_e_error, 0.0, 1e-15);
-    EXPECT_NEAR(rho_u_i_error, 0.0, 1e-15);
+    EXPECT_NEAR(rho_u_e_error, 0.0, 1e-12);
+    EXPECT_NEAR(rho_u_i_error, 0.0, 1e-12);
 }

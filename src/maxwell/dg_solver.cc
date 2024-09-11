@@ -25,7 +25,8 @@ void PHMaxwellDGSolver<dim>::solve(TimestepCallback writeout_callback) {
         return true;
     };
     auto recommend_dt = [&]() -> double {
-        return 0.001;
+        return flux_operator.recommend_dt(
+            discretization->get_matrix_free(), solution);
     };
     std::vector<TimestepCallback> callbacks = {writeout_callback};
     advance(step, t_end, recommend_dt, callbacks);

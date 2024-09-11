@@ -109,8 +109,87 @@ class ForwardEulerOperator {
                 const double c = 1.0) = 0;
 };
 
-template <typename Number, typename SolutionVec, typename Operator>
-class SSPRK2Integrator {
+/**
+ * Interface for SSP-RK (Strong-stability-preserving Runge-Kutta) integrators.
+ *
+ * These integrators are based on the idea of a "Forward Euler operator",
+ * by which we mean an operator that calculates
+ *
+ * ```
+ * sol = sol + dt * F(sol).
+ * ```
+ */
+template <typename SolutionVec, typename Operator>
+class SSPRKIntegrator {
+    public:
+        virtual ~SSPRKIntegrator() = default;
+
+    virtual void evolve_one_time_step(Operator& forward_euler_operator,
+                                      // Destination
+                                      SolutionVec& solution,
+                                      const double dt,
+                                      const double t) = 0;
+
+    virtual void reinit(const SolutionVec& sol, int sol_register_count) = 0;
+};
+
+/**
+ * The Forward Euler or RK1 integrator.
+ *
+ * ```
+ * sol = sol + dt * F(sol)
+ * ```
+ */
+template <typename SolutionVec, typename Operator>
+class RK1Integrator : public SSPRKIntegrator<SolutionVec, Operator> {
+   public:
+    RK1Integrator() {}
+
+    void evolve_one_time_step(Operator& forward_euler_operator,
+                              // Destination
+                              SolutionVec& solution,
+                              const double dt,
+                              const double t) override;
+
+    void reinit(const SolutionVec& sol, int sol_register_count) override;
+
+   private:
+    SolutionVec soln_scratch;
+    std::vector<SolutionVec> sol_registers;
+};
+
+template <typename SolutionVec, typename Operator>
+void RK1Integrator<SolutionVec, Operator>::evolve_one_time_step(
+    Operator& forward_euler_operator,
+    SolutionVec& solution,
+    const double dt, const double t) {
+    // soln = soln + dt * f(soln)
+    forward_euler_operator.perform_forward_euler_step(
+        solution, solution, sol_registers, dt, t);
+    //solution.sadd(0.0, 1.0, soln_scratch);
+}
+
+template <typename SolutionVec, typename Operator>
+void RK1Integrator<SolutionVec, Operator>::reinit(
+    const SolutionVec& sol,
+    int sol_register_count) {
+    soln_scratch.reinit(sol);
+    for (int i = 0; i < sol_register_count; i++) {
+        sol_registers.emplace_back();
+        sol_registers[i].reinit(sol);
+    }
+}
+
+/**
+ * The 2-stage second-order SSP-RK integrator.
+ *
+ * ```
+ * sol_1 = sol + dt * F(sol)
+ * sol = 0.5 * sol + 0.5 * sol_1 + 0.5 * dt * F(sol_1)
+ * ```
+ */
+template <typename SolutionVec, typename Operator>
+class SSPRK2Integrator : public SSPRKIntegrator<SolutionVec, Operator> {
    public:
     SSPRK2Integrator() {}
 
@@ -118,17 +197,17 @@ class SSPRK2Integrator {
                               // Destination
                               SolutionVec& solution,
                               const double dt,
-                              const double t);
+                              const double t) override;
 
-    void reinit(const SolutionVec& sol, int sol_register_count);
+    void reinit(const SolutionVec& sol, int sol_register_count) override;
 
    private:
     SolutionVec f_1;
     std::vector<SolutionVec> sol_registers;
 };
 
-template <typename Number, typename SolutionVec, typename Operator>
-void SSPRK2Integrator<Number, SolutionVec, Operator>::evolve_one_time_step(
+template <typename SolutionVec, typename Operator>
+void SSPRK2Integrator<SolutionVec, Operator>::evolve_one_time_step(
     Operator& forward_euler_operator,
     SolutionVec& solution,
     const double dt, const double t) {
@@ -140,8 +219,8 @@ void SSPRK2Integrator<Number, SolutionVec, Operator>::evolve_one_time_step(
         solution, f_1, sol_registers, dt, t + dt, 0.5, 0.5, 0.5);
 }
 
-template <typename Number, typename SolutionVec, typename Operator>
-void SSPRK2Integrator<Number, SolutionVec, Operator>::reinit(
+template <typename SolutionVec, typename Operator>
+void SSPRK2Integrator<SolutionVec, Operator>::reinit(
     const SolutionVec& sol,
     int sol_register_count) {
     f_1.reinit(sol);

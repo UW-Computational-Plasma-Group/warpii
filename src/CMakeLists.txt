@@ -3,11 +3,13 @@ add_library(libwarpii
     common_params.cc
     input_file.cc
     timestepper.cc
+    geometry.cc
     grid.cc
     grid_descriptions.cc
     grid_generation.cc
     dof_utils.cc
     five_moment/dg_solution_helper.cc
+    five_moment/cell_evaluators.cc
     five_moment/dg_solver.cc
     five_moment/five_moment.cc
     five_moment/explicit_operator.cc

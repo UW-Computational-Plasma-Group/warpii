@@ -44,7 +44,7 @@ double PHMaxwellSolutionHelper<dim>::compute_global_error(
     Function<dim>& f,
     unsigned int component) const {
     AssertThrow(f.n_components == 8, 
-            ExcMessage("The function provided to compare against must have 5 components."));
+            ExcMessage("The function provided to compare against must have 8 components."));
     Vector<double> difference;
     auto select = ComponentSelectFunction<dim, double>(component, discretization->get_n_components());
     VectorTools::integrate_difference(

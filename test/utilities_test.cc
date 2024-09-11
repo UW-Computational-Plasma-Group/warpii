@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "src/utilities.h"
+#include "utilities.h"
 
 TEST(UtilitiesTests, RemoveFileExtensionTest) {
     EXPECT_EQ(remove_file_extension("foo.inp"), "foo");

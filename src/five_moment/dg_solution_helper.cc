@@ -120,6 +120,16 @@ Tensor<1, 5, double> FiveMomentDGSolutionHelper<dim>::compute_global_integral(
     return sum;
 }
 
+template <int dim>
+double FiveMomentDGSolutionHelper<dim>::compute_global_electrostatic_energy(
+    LinearAlgebra::distributed::Vector<double>& solution) {
+    auto zero = Functions::ZeroFunction<dim>(5*n_species + 8);
+    const double sqrt_result = compute_global_error(solution, zero, 5*n_species)
+        + compute_global_error(solution, zero, 5*n_species + 1)
+        + compute_global_error(solution, zero, 5*n_species + 2);
+    return sqrt_result * sqrt_result;
+}
+
 template class FiveMomentDGSolutionHelper<1>;
 template class FiveMomentDGSolutionHelper<2>;
 

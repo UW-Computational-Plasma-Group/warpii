@@ -44,7 +44,7 @@ class PHMaxwellDGSolver {
     unsigned int n_boundaries;
     MaxwellSolutionVec solution;
 
-    SSPRK2Integrator<double, MaxwellSolutionVec, MaxwellFluxDGOperator<dim, MaxwellSolutionVec>> ssp_integrator;
+    SSPRK2Integrator<MaxwellSolutionVec, MaxwellFluxDGOperator<dim, MaxwellSolutionVec>> ssp_integrator;
     MaxwellFluxDGOperator<dim, MaxwellSolutionVec> flux_operator;
     PHMaxwellSolutionHelper<dim> solution_helper;
 };

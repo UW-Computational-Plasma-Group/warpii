@@ -83,6 +83,8 @@ class FiveMomentApp : public AbstractApp {
 
     void output_results(const unsigned int result_number);
 
+    void append_diagnostics(const double t, const bool with_header=false);
+
    private:
     std::shared_ptr<five_moment::Extension<dim>> extension;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
@@ -137,6 +139,9 @@ Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
     declare_t_end(prm);
     declare_write_output(prm);
     declare_n_writeout_frames(prm);
+
+    prm.declare_entry("ExplicitIntegrator", "RK1", Patterns::Selection("RK1|SSPRK2"),
+            "The type of integrator to use for the explicit time marching of the flux terms.");
 }
 
 template <int dim>
@@ -181,9 +186,12 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     auto discretization = std::make_shared<NodalDGDiscretization<dim>>(
         grid, n_components, fe_degree);
 
+    const auto integrator_type = prm.get("ExplicitIntegrator");
+
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
         ext, discretization, species, fields, plasma_norm, gas_gamma, 
-        t_end, n_boundaries, fields_enabled);
+        t_end, n_boundaries, fields_enabled, integrator_type);
+
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,
                                                     grid, std::move(dg_solver),
@@ -227,6 +235,7 @@ void FiveMomentApp<dim>::setup(WarpiiOpts) {
     solver->reinit();
     solver->project_initial_condition();
     output_results(0);
+    append_diagnostics(0.0, true);
 }
 
 template <int dim>
@@ -238,7 +247,13 @@ void FiveMomentApp<dim>::run(WarpiiOpts) {
     // skip the zeroth writeout because we already did that in the setup phase
     TimestepCallback writeout_callback = TimestepCallback(writeout_interval, writeout, false);
 
-    solver->solve(writeout_callback);
+    double diagnostic_interval = writeout_interval / 10.0;
+    auto diagnostic = [&](double t) -> void {
+        append_diagnostics(t);
+    };
+    TimestepCallback diagnostic_callback = TimestepCallback(diagnostic_interval, diagnostic, false);
+
+    solver->solve(writeout_callback, diagnostic_callback);
 }
 
 template <int dim>
@@ -316,6 +331,28 @@ void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
     const std::string filename =
         "solution_" + Utilities::int_to_string(result_number) + ".vtu";
     data_out.write_vtu_in_parallel(filename, MPI_COMM_WORLD);
+}
+
+template <int dim>
+void FiveMomentApp<dim>::append_diagnostics(const double time, const bool with_header) {
+    if (with_header) {
+        std::ofstream file("diagnostics.csv");
+        AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
+        std::string header_string = "time";
+        if (fields_enabled) {
+            header_string += ",electrostatic_energy";
+        }
+        file << header_string << std::endl;
+    }
+
+    std::ofstream file("diagnostics.csv", std::ios::app);
+    AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
+    file << time;
+    if (fields_enabled) {
+        file << "," << get_solution_helper()
+            .compute_global_electrostatic_energy(get_solution().mesh_sol);
+    }
+    file << std::endl;
 }
 
 }  // namespace five_moment

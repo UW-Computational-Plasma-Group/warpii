@@ -2,6 +2,8 @@
 #include <deal.II/base/config.h>
 #include <deal.II/base/tensor.h>
 #include "../tensor_utils.h"
+#include "../geometry.h"
+#include "../utilities.h"
 
 namespace warpii {
 namespace five_moment {
@@ -280,6 +282,188 @@ inline DEAL_II_ALWAYS_INLINE Tensor<1, 5, Number> euler_CH_entropy_dissipating_f
     }
     flux[4] -= 0.5 * lambda_max * energy_stab;
 
+    return flux;
+}
+
+template <int dim, typename Number>
+Tensor<1, 5, Number> euler_rotate_to_frame(
+        const Tensor<1, 5, Number> &q, 
+        const Tensor<1, 3, Number> &normal,
+        const Tensor<1, 3, Number> &tangent,
+        const Tensor<1, 3, Number> &binormal
+        ) {
+
+    Tensor<1, 3, Number> rho_u;
+    rho_u[0] = q[1];
+    rho_u[1] = q[2];
+    rho_u[2] = q[3];
+
+    Tensor<1, 5, Number> result;
+    result[0] = q[0];
+
+    result[1] = rho_u * normal;
+    result[2] = rho_u * tangent;
+    result[3] = rho_u * binormal;
+
+    result[4] = q[4];
+    return result;
+}
+
+template <int dim, typename Number> 
+Tensor<1, dim, Number> only_dim(Tensor<1, 3, Number> n) {
+    Tensor<1, dim, Number> result;
+    for (unsigned int d = 0; d < dim; d++) {
+        result[d] = n[d];
+    }
+    return result;
+}
+
+template <int dim, typename Number>
+Tensor<1, 5, Number> euler_antirotate_from_frame(
+        const Tensor<1, 5, Number> &q_rotated,
+        const Tensor<1, 3, Number> &normal,
+        const Tensor<1, 3, Number> &tangent,
+        const Tensor<1, 3, Number> &binormal
+        ) {
+    Tensor<1, 5, Number> result;
+    Tensor<1, 3, Number> rho_u = q_rotated[1] * normal + q_rotated[2] * tangent + q_rotated[3] * binormal;
+    result[0] = q_rotated[0];
+    result[1] = rho_u[0];
+    result[2] = rho_u[1];
+    result[3] = rho_u[2];
+    result[4] = q_rotated[4];
+    return result;
+}
+
+/**
+ * Implements pages 362-366 from Roe's paper:
+ *
+ * Approximate Riemann solvers, parameter vectors, and difference
+ * schemes, P.L. Roe, JCP Vol 43, Issue 2, Oct 1981, pg 357-372 
+ * https://www.sciencedirect.com/science/article/pii/0021999181901285
+ */
+template <int dim, typename Number>
+Tensor<1, 5, Number> euler_roe_flux(
+        const Tensor<1, 5, Number> &q_in,
+    const Tensor<1, 5, Number> &q_out,
+    const Tensor<1, dim, Number> &outward_normal, double gamma, bool log) {
+
+    const auto n = at_least_3d(outward_normal);
+    const auto tangent_binormal = tangent_and_binormal(n);
+    const auto tangent = tangent_binormal.first;
+    const auto binormal = tangent_binormal.second;
+
+    const auto qR_in = euler_rotate_to_frame<dim>(q_in, n, tangent, binormal);
+    const auto qR_out = euler_rotate_to_frame<dim>(q_out, n, tangent, binormal);
+
+    const auto u_in = euler_velocity<3>(qR_in);
+    const auto u_out = euler_velocity<3>(qR_out);
+    const auto rho_in = qR_in[0];
+    const auto rho_out = qR_out[0];
+
+    const auto rho_denom = std::sqrt(rho_in) + std::sqrt(rho_out);
+    if (log) {
+    SHOW(u_in);
+    SHOW(u_out);
+    SHOW(rho_denom);
+    }
+    const auto U_hat = (std::sqrt(rho_in) * u_in[0] + std::sqrt(rho_out) * u_out[0]) / rho_denom;
+    const auto V_hat = (std::sqrt(rho_in) * u_in[1] + std::sqrt(rho_out) * u_out[1]) / rho_denom;
+    const auto W_hat = (std::sqrt(rho_in) * u_in[2] + std::sqrt(rho_out) * u_out[2]) / rho_denom;
+
+    const auto E_in = qR_in[4];
+    const auto E_out = qR_out[4];
+    const auto p_in = euler_pressure<3>(qR_in, gamma);
+    SHOW(p_in);
+    const auto p_out = euler_pressure<3>(qR_out, gamma);
+    SHOW(p_out);
+
+    const auto H_hat = ((E_in + p_in) / std::sqrt(rho_in) + (E_out + p_out) / std::sqrt(rho_out)) / rho_denom;
+
+    if (log) {
+    SHOW(U_hat);
+    }
+
+    const auto q2 = (U_hat * U_hat + V_hat * V_hat + W_hat * W_hat);
+    const auto a_squared = (gamma - 1) * (H_hat - 0.5 * q2);
+    const auto a = std::sqrt(a_squared);
+
+    if (log) {
+        SHOW(a);
+    }
+
+    const auto jump = qR_out - qR_in;
+
+    // We're computing the eigendecomposition of the jump:
+    // Equation (22a)
+    const Number a4 = (gamma - 1.0) / a_squared * ((H_hat - q2) * jump[0] + U_hat * jump[1] + V_hat * jump[2] + W_hat * jump[3] - jump[4]);
+    // (22b)
+    const Number wa3 = jump[3] - W_hat * jump[1];
+    // (22c)
+    const Number va2 = jump[2] - V_hat * jump[0];
+    // a * (22d) + (22e)
+    const Number a5 = 1.0 / (2.0*a) * (a * jump[0] - U_hat * jump[0] + jump[1] - a * a4);
+    // (22d)
+    const Number a1 = jump[0] - a4 - a5;
+
+    // w1 = a1 * e1
+    Tensor<1, 5, Number> w1;
+    w1[0] = a1;
+    w1[1] = (U_hat - a) * a1;
+    w1[2] = V_hat * a1;
+    w1[3] = W_hat * a1;
+    w1[4] = (H_hat - U_hat * a) * a1;
+
+    if (log) {
+        SHOW(w1);
+    }
+
+    // w234 = va2 * (e2/v) + wa3 * (e3/w) + a4*e4
+    Tensor<1, 5, Number> w234;
+    w234[0] = a4;
+    w234[1] = U_hat * a4;
+    w234[2] = va2 + V_hat * a4;
+    w234[3] = wa3 + W_hat * a4;
+    w234[4] = va2 * V_hat + wa3 * W_hat + 0.5 * a4 * q2;
+    if (log) {
+        SHOW(w234);
+    }
+
+    Tensor<1, 5, Number> w5;
+    w5[0] = a5;
+    w5[1] = (U_hat + a) * a5;
+    w5[2] = V_hat * a5;
+    w5[3] = W_hat * a5;
+    w5[4] = (H_hat + U_hat * a) * a5;
+    if (log) {
+        SHOW(w5);
+    }
+
+    const auto zero = Number(0.0);
+    // Left-going fluctuations
+    Tensor<1, 5, Number> amdq = std::min(U_hat - a, zero) * w1 + std::min(U_hat, zero) * w234 + std::min(U_hat + a, zero) * w5;
+    if (log) {
+    SHOW(amdq);
+    }
+    // Right-going fluctuations
+    Tensor<1, 5, Number> apdq = std::max(U_hat - a, zero) * w1 + std::max(U_hat, zero) * w234 + std::max(U_hat + a, zero) * w5;
+    if (log) {
+    SHOW(apdq);
+    }
+
+    const auto FL = euler_flux<dim>(q_in, gamma) * outward_normal;
+    const auto FR = euler_flux<dim>(q_out, gamma) * outward_normal;
+    if (log) {
+        SHOW(FL);
+    }
+
+    auto flux = 0.5 * (FL + FR) - 0.5 * euler_antirotate_from_frame<dim>(apdq - amdq,
+            n, tangent, binormal);
+
+    //flux = euler_antirotate_from_frame<dim>(flux, n, tangent, binormal);
+    if (log) {
+        SHOW(flux);
+    }
     return flux;
 }
 

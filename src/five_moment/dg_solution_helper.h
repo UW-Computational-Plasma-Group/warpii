@@ -53,6 +53,9 @@ class FiveMomentDGSolutionHelper {
         LinearAlgebra::distributed::Vector<double>& solution,
         unsigned int species_index);
 
+    double compute_global_electrostatic_energy(
+        LinearAlgebra::distributed::Vector<double>& solution);
+
    private:
     unsigned int n_species;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;

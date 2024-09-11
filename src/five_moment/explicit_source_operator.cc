@@ -1,7 +1,9 @@
 #include "explicit_source_operator.h"
+#include <deal.II/matrix_free/evaluation_flags.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include "function_eval.h"
 #include "explicit_operator.h"
+#include "five_moment/cell_evaluators.h"
 
 namespace warpii {
 namespace five_moment {
@@ -77,7 +79,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_inverse_mass_matrix(
         }
     }
 
-    if (fields_enabled && !fields->get_general_source_term().is_zero) {
+    if (fields_enabled) {
         FEEvaluation<dim, -1, 0, 8, double> phi(mf, 0, 1,
                                                       5*species.size());
         MatrixFreeOperators::CellwiseInverseMassMatrix<dim, -1, 8, double>
@@ -102,31 +104,36 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &cell_range) {
 
-    std::vector<FEEvaluation<dim, -1, 0, 5, double>> fluid_evals;
-    for (unsigned int i = 0; i < species.size(); i++) {
-        fluid_evals.emplace_back(mf, 0, 1, 5*i);
-    }
+    FiveMomentCellEvaluators<dim> evaluators(mf, src, species.size(), fields_enabled);
 
-    std::optional<FEEvaluation<dim, -1, 0, 8, double>> field_eval = fields_enabled
-        ? std::make_optional<FEEvaluation<dim, -1, 0, 8, double>>(mf, 0, 1, 5*species.size())
-        : std::nullopt;
+    std::vector<bool> nonzero_fluid_general_source_term;
+    for (unsigned int i = 0; i < species.size(); i++) {
+        nonzero_fluid_general_source_term.push_back(
+                !(*species[i]->general_source_term).is_zero);
+    }
+    bool nonzero_field_general_source_term = !fields->get_general_source_term().is_zero;
 
     for (unsigned int cell = cell_range.first; cell < cell_range.second; cell++) {
+        bool call_extension_prepare = false;
         for (unsigned int i = 0; i < species.size(); i++) {
-            auto& phi = fluid_evals[i];
-            phi.reinit(cell);
-            phi.gather_evaluate(src, EvaluationFlags::values);
+            // We need to have species value evaluations for rho_c.
+            evaluators.ensure_species_evaluated(i, cell, EvaluationFlags::values);
+            if (species.at(i)->has_extension_source_term) {
+                call_extension_prepare = true;
+            }
         }
         if (fields_enabled) {
-            field_eval->reinit(cell);
-            field_eval->gather_evaluate(src, EvaluationFlags::values);
+            evaluators.ensure_fields_evaluated(cell, EvaluationFlags::values);
+        }
+        if (call_extension_prepare) {
+            extension->prepare_source_term_evaluators(cell, evaluators);
         }
 
-        for (unsigned int q : fluid_evals[0].quadrature_point_indices()) {
+        for (unsigned int q : evaluators.species_eval(0).quadrature_point_indices()) {
             auto rho_c = VectorizedArray<double>(0.0);
 
             for (unsigned int i = 0; i < species.size(); i++) {
-                auto& phi = fluid_evals[i];
+                auto& phi = evaluators.species_eval(i);
 
                 if (fields_enabled) {
                     double Zi = species[i]->charge;
@@ -134,7 +141,10 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
                     rho_c += phi.get_value(q)[0] * Zi / Ai;
                 }
 
-                if (!(*species[i]->general_source_term).is_zero) {
+                if (species.at(i)->has_extension_source_term) {
+                    const auto source_val = extension->source_term(q, i, evaluators);
+                    phi.submit_value(source_val, q);
+                } else if (nonzero_fluid_general_source_term[i]) {
                     const auto p = phi.quadrature_point(q);
                     const auto source_val = evaluate_function<dim, 5>(*species[i]->general_source_term, p);
                     phi.submit_value(source_val, q);
@@ -144,24 +154,24 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
             if (fields_enabled) {
                 Tensor<1, 8, VectorizedArray<double>> field_source;
                 field_source = 0.0;
-                if (!fields->get_general_source_term().is_zero) {
-                    const auto p = field_eval->quadrature_point(q);
+                if (nonzero_field_general_source_term) {
+                    const auto p = evaluators.field_eval()->quadrature_point(q);
                     field_source += evaluate_function<dim, 8>(*(fields->get_general_source_term().func), p);
                 }
                 const double chi = fields->phmaxwell_constants().chi;
                 field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;
-                field_eval->submit_value(field_source, q);
+                evaluators.field_eval()->submit_value(field_source, q);
             }
         }
 
         for (unsigned int i = 0; i < species.size(); i++) {
-            if (!(*species[i]->general_source_term).is_zero) {
-                auto& phi = fluid_evals[i];
+            if (species.at(i)->has_extension_source_term || nonzero_fluid_general_source_term[i]) {
+                auto& phi = evaluators.species_eval(i);
                 phi.integrate_scatter(EvaluationFlags::values, dst);
             }
         }
         if (fields_enabled) {
-            field_eval->integrate_scatter(EvaluationFlags::values, dst);
+            evaluators.field_eval()->integrate_scatter(EvaluationFlags::values, dst);
         }
     }
 }

@@ -14,7 +14,7 @@
 #include <algorithm>
 
 #include "../../dof_utils.h"
-#include "../../utilities.h"
+#include "utilities.h"
 #include "five_moment/euler.h"
 #include "../solution_vec.h"
 #include "five_moment/species.h"

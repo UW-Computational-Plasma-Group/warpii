@@ -22,6 +22,8 @@ set n_dims = 1
 set t_end = 0.04
 set write_output = false
 
+set ExplicitIntegrator = SSPRK2
+
 set fe_degree = 2
 
 subsection geometry

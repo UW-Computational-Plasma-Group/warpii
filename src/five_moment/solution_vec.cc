@@ -7,6 +7,13 @@ namespace warpii {
             boundary_integrated_fluxes.reinit(other.boundary_integrated_fluxes);
         }
 
+        void FiveMSolutionVec::sadd(const double s, const double a, const FiveMSolutionVec& V) {
+            mesh_sol.sadd(s, a, V.mesh_sol);
+            if (!boundary_integrated_fluxes.is_empty()) {
+                boundary_integrated_fluxes.sadd(s, a, V.boundary_integrated_fluxes);
+            }
+        }
+
         void FiveMBoundaryIntegratedFluxesVector::sadd(const double s, const double a, const FiveMBoundaryIntegratedFluxesVector& V) {
             data.sadd(s, a, V.data);
         }

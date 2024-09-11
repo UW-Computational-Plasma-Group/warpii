@@ -48,6 +48,8 @@ namespace warpii {
                 FiveMBoundaryIntegratedFluxesVector boundary_integrated_fluxes;
 
             void reinit(const FiveMSolutionVec& other);
+
+            void sadd(const double s, const double a, const FiveMSolutionVec& V);
         };
     }
 }

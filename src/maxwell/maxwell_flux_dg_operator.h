@@ -14,11 +14,11 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../dof_utils.h"
 #include "../rk.h"
-#include "function_eval.h"
-#include "fields.h"
 #include "bc_map.h"
+#include "fields.h"
+#include "function_eval.h"
+#include "geometry.h"
 #include "maxwell.h"
-#include "../geometry.h"
 
 using namespace dealii;
 
@@ -29,20 +29,21 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
    public:
     MaxwellFluxDGOperator(
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
-        unsigned int first_component_index, 
-        std::shared_ptr<PHMaxwellFields<dim>> fields
-        )
+        unsigned int first_component_index,
+        std::shared_ptr<PHMaxwellFields<dim>> fields)
         : discretization(discretization),
           first_component_index(first_component_index),
           fields(fields),
-          constants(fields->phmaxwell_constants())
-    {}
+          constants(fields->phmaxwell_constants()) {}
 
     void perform_forward_euler_step(SolutionVec &dst, const SolutionVec &u,
                                     std::vector<SolutionVec> &sol_registers,
                                     const double dt, const double t,
-                                    const double b=0.0, const double a=1.0,
-                                    const double c=1.0) override;
+                                    const double b = 0.0, const double a = 1.0,
+                                    const double c = 1.0) override;
+
+    double recommend_dt(const MatrixFree<dim, double> &mf,
+                        const SolutionVec &sol);
 
    private:
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
@@ -73,6 +74,10 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
         LinearAlgebra::distributed::Vector<double> &dst,
         const LinearAlgebra::distributed::Vector<double> &src,
         const std::pair<unsigned int, unsigned int> &face_range) const;
+
+    double compute_cell_transport_speed(
+        const MatrixFree<dim, double> &mf,
+        const LinearAlgebra::distributed::Vector<double> &sol) const;
 };
 
 template <int dim, typename SolutionVec>
@@ -238,6 +243,8 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
 
             if (bc_type == MaxwellBCType::COPY_OUT) {
                 val_p = val_m;
+                val_p[6] = -val_m[6];
+                val_p[7] = -val_m[7];
             } else if (bc_type == MaxwellBCType::PERFECT_CONDUCTOR) {
                 // Just the normal component of E
                 const auto E_bdy = (n3d * E_m) * n3d;
@@ -265,6 +272,64 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
 
         fe_eval_m.integrate_scatter(EvaluationFlags::values, dst);
     }
+}
+
+template <int dim, typename SolutionVec>
+double MaxwellFluxDGOperator<dim, SolutionVec>::recommend_dt(
+    const MatrixFree<dim, double> &mf, const SolutionVec &sol) {
+    double max_transport_speed = compute_cell_transport_speed(mf, sol.mesh_sol);
+    unsigned int fe_degree = discretization->get_fe_degree();
+    return 0.5 / (max_transport_speed * (fe_degree + 1) * (fe_degree + 1));
+}
+
+template <int dim, typename SolutionVec>
+double MaxwellFluxDGOperator<dim, SolutionVec>::compute_cell_transport_speed(
+    const MatrixFree<dim, double> &mf,
+    const LinearAlgebra::distributed::Vector<double> &solution) const {
+    using VA = VectorizedArray<Number>;
+
+    Number max_transport = 0;
+
+    unsigned int first_component = first_component_index;
+
+    FEEvaluation<dim, -1, 0, 8, Number> phi(mf, 0, 1, first_component);
+
+    for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
+        phi.reinit(cell);
+        phi.gather_evaluate(solution, EvaluationFlags::values);
+        VA local_max = 0.;
+        for (const unsigned int q : phi.quadrature_point_indices()) {
+            const double max_speed =
+                std::max(constants.c, std::max(constants.c * constants.chi,
+                         constants.c * constants.gamma));
+
+            const auto inverse_jacobian = phi.inverse_jacobian(q);
+            Tensor<1, dim, VA> eigenvector;
+            for (unsigned int d = 0; d < dim; ++d) eigenvector[d] = 1.;
+            for (unsigned int i = 0; i < 5; ++i) {
+                eigenvector = transpose(inverse_jacobian) *
+                              (inverse_jacobian * eigenvector);
+                VA eigenvector_norm = 0.;
+                for (unsigned int d = 0; d < dim; ++d)
+                    eigenvector_norm =
+                        std::max(eigenvector_norm, std::abs(eigenvector[d]));
+                eigenvector /= eigenvector_norm;
+            }
+            const auto jac_times_ev = inverse_jacobian * eigenvector;
+            const auto max_eigenvalue = std::sqrt(
+                (jac_times_ev * jac_times_ev) / (eigenvector * eigenvector));
+            local_max = std::max(local_max, max_eigenvalue * max_speed);
+        }
+
+        for (unsigned int v = 0; v < mf.n_active_entries_per_cell_batch(cell);
+             ++v) {
+            for (unsigned int d = 0; d < 3; ++d)
+                max_transport = std::max(max_transport, local_max[v]);
+        }
+    }
+    max_transport = Utilities::MPI::max(max_transport, MPI_COMM_WORLD);
+
+    return max_transport;
 }
 
 }  // namespace warpii

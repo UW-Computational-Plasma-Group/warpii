@@ -16,7 +16,7 @@
 
 #include "../dof_utils.h"
 #include "five_moment/extension.h"
-#include "../utilities.h"
+#include "utilities.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "five_moment/euler.h"
 #include "fluxes/subcell_finite_volume_flux.h"
@@ -482,7 +482,7 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
 
                 auto analytic_flux = euler_flux<dim>(w_m, gas_gamma) * normal;
                 if (compute_from_ghost) {
-                    numerical_flux = euler_numerical_flux<dim>(w_m, w_p, normal, gas_gamma);
+                    numerical_flux = euler_roe_flux<dim>(w_m, w_p, normal, gas_gamma, false);
                 }
 
                 phi.submit_value(analytic_flux - numerical_flux, q);

@@ -5,6 +5,7 @@
 #include <deal.II/grid/tria.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
 
+#include "five_moment/cell_evaluators.h"
 #include "simulation_input.h"
 #include "species.h"
 #include "../extensions/extension.h"
@@ -48,6 +49,11 @@ class Extension : public virtual warpii::Extension,
                 declare_bc_parameters(input.prm, i, boundary_id);
                 input.prm.leave_subsection();
             }
+            input.prm.enter_subsection("GeneralSourceTerm");
+            if (input.prm.get("Type") == "Extension") {
+                declare_source_parameters(input.prm, i);
+            }
+            input.prm.leave_subsection();
             input.prm.leave_subsection();
         }
 
@@ -62,9 +68,31 @@ class Extension : public virtual warpii::Extension,
                 populate_bc_from_parameters(input, i, boundary_id);
                 input.prm.leave_subsection();
             }
+            input.prm.enter_subsection("GeneralSourceTerm");
+            if (input.prm.get("Type") == "Extension") {
+                populate_source_from_parameters(input, i);
+            }
+            input.prm.leave_subsection();
             input.prm.leave_subsection();
         }
+
     }
+
+    virtual void declare_source_parameters(ParameterHandler& prm,
+            unsigned int species_index);
+
+    virtual void populate_source_from_parameters(SimulationInput& input,
+            unsigned int species_index);
+
+    virtual void prepare_source_term_evaluators(
+            const unsigned int cell,
+            FiveMomentCellEvaluators<dim>& evaluators);
+
+    virtual Tensor<1, 5, VectorizedArray<double>> source_term(
+            const unsigned int q, const unsigned int species_index,
+            const FiveMomentCellEvaluators<dim>& evaluators);
+
+
 
     /**
      * Declare any parameters required for the boundary condition.
@@ -225,6 +253,30 @@ void Extension<dim>::declare_bc_parameters(ParameterHandler&,
 template <int dim>
 void Extension<dim>::populate_bc_from_parameters(SimulationInput& ,
         unsigned int , types::boundary_id ) {}
+
+template <int dim>
+void Extension<dim>::declare_source_parameters(ParameterHandler&, 
+        unsigned int) {}
+
+template <int dim>
+void Extension<dim>::populate_source_from_parameters(SimulationInput& ,
+        unsigned int) {}
+
+template <int dim>
+void Extension<dim>::prepare_source_term_evaluators(
+        const unsigned int ,
+        FiveMomentCellEvaluators<dim>&
+        ) {
+    AssertThrow(false, ExcMessage("extension method was not properly overridden."));
+}
+
+template <int dim>
+Tensor<1, 5, VectorizedArray<double>> Extension<dim>::source_term(
+        const unsigned , const unsigned int ,
+        const FiveMomentCellEvaluators<dim>&
+        ) {
+    AssertThrow(false, ExcMessage("extension method was not properly overridden."));
+}
 
 }  // namespace five_moment
 }  // namespace warpii
