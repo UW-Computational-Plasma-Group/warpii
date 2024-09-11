@@ -2,6 +2,7 @@
 #include "utilities.h"
 #include <deal.II/matrix_free/evaluation_flags.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
+#include <optional>
 
 
 namespace warpii {

@@ -1,6 +1,7 @@
 #pragma once
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/matrix_free/evaluation_flags.h>
+#include <optional>
 
 using namespace dealii;
 
