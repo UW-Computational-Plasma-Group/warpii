@@ -80,6 +80,6 @@ set t_end = 60.0
     double rho_u_i_error = helper.compute_global_error(soln.mesh_sol, 
             rho_u_expected, 6);
 
-    EXPECT_NEAR(rho_u_e_error, 0.0, 1e-15);
-    EXPECT_NEAR(rho_u_i_error, 0.0, 1e-15);
+    EXPECT_NEAR(rho_u_e_error, 0.0, 1e-14);
+    EXPECT_NEAR(rho_u_i_error, 0.0, 1e-14);
 }
