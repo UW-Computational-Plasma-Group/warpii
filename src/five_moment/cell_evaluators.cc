@@ -43,7 +43,7 @@ void FiveMomentCellEvaluators<dim>::ensure_fields_evaluated(
 
     if (state.has_value() && state->first == cell) {
         const auto state_flags = state->second;
-        if (state_flags | flags == state_flags) {
+        if ((state_flags | flags) == state_flags) {
             return;
         } else {
             phi->gather_evaluate(src, state_flags | flags);
