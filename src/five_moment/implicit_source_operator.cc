@@ -107,7 +107,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
                     L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, rho_i * Z_i * Z_i / A_i / A_i);
                     L.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
-                           rho_i * omega_c_tau * Z_i / A_i / A_i);
+                           omega_c_tau * Z_i / A_i);
                 }
 
                 M.reinit(3 * n_species + 3);
@@ -132,7 +132,6 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                         RHS(3 + 3 * i + d) = j_i_d;
                     }
                 }
-
                 M.solve(RHS);
                 auto &LHS = RHS;
 
@@ -154,6 +153,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
             for (unsigned int i = 0; i < n_species; i++) {
                 auto species_vals = species_evals[i].get_dof_value(dof);
+                
                 VectorizedArray<double> old_KE = VectorizedArray(0.0);
                 VectorizedArray<double> new_KE = VectorizedArray(0.0);
                 for (unsigned int d = 0; d < 3; d++) {
@@ -163,6 +163,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                 }
                 VectorizedArray<double> internal_energy = species_vals[4] - old_KE;
                 species_vals[4] = internal_energy + new_KE;
+
                 species_evals[i].submit_dof_value(species_vals, dof);
             }
         }
