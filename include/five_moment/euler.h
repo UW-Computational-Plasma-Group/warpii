@@ -374,9 +374,7 @@ Tensor<1, 5, Number> euler_roe_flux(
     const auto E_in = qR_in[4];
     const auto E_out = qR_out[4];
     const auto p_in = euler_pressure<3>(qR_in, gamma);
-    SHOW(p_in);
     const auto p_out = euler_pressure<3>(qR_out, gamma);
-    SHOW(p_out);
 
     const auto H_hat = ((E_in + p_in) / std::sqrt(rho_in) + (E_out + p_out) / std::sqrt(rho_out)) / rho_denom;
 
