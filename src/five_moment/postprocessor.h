@@ -60,12 +60,12 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
             double pressure = euler_pressure<dim, double>(solution, gamma);
 
             for (unsigned int d = 0; d < 3; ++d) {
-                computed_quantities[p](d + 5*i) = velocity[d];
+                computed_quantities[p](d + 6*i) = velocity[d];
             }
-            computed_quantities[p](3 + 5*i) = pressure;
-            computed_quantities[p](4 + 5*i) =
+            computed_quantities[p](3 + 6*i) = pressure;
+            computed_quantities[p](4 + 6*i) =
                 std::log(pressure) - gamma * std::log(density);
-            computed_quantities[p](5 + 5*i) = std::sqrt(gamma * pressure / density);
+            computed_quantities[p](5 + 6*i) = std::sqrt(gamma * pressure / density);
         }
     }
 }
