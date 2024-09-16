@@ -115,6 +115,45 @@ TEST(EulerFluxTests, EulerCHESTest) {
     EXPECT_NEAR(actual[4],  0.9381717944489488, 1e-15);
 }
 
+void test_entropy_conservation_1d(
+        Tensor<1, 5, double> stateL, Tensor<1, 5, double> stateR, double gamma) {
+    auto wL = euler_entropy_variables<1>(stateL, gamma);
+    auto wR = euler_entropy_variables<1>(stateR, gamma);
+
+    auto fL = euler_flux<1>(stateL, gamma);
+    auto fR = euler_flux<1>(stateR, gamma);
+
+    auto qL = euler_entropy_flux<1>(stateL, gamma);
+    auto qR = euler_entropy_flux<1>(stateR, gamma);
+
+    // Entropy flux potential
+    Tensor<1, 1, double> psiL;
+    Tensor<1, 1, double> psiR;
+    for (unsigned int d = 0; d < 1; d++) {
+        psiL[d] = 0.0;
+        psiR[d] = 0.0;
+        for (unsigned int c = 0; c < 5; c++) {
+            psiL[d] += wL[c] * fL[c][d];
+            psiR[d] += wR[c] * fR[c][d];
+        }
+        psiL[d] -= qL[d];
+        psiR[d] -= qR[d];
+
+        EXPECT_NEAR(psiL[d], stateL[d+1], 1e-10*stateL.norm());
+        EXPECT_NEAR(psiR[d], stateR[d+1], 1e-10*stateR.norm());
+    }
+
+    Tensor<1, 1, double> n;
+    n[0] = 1.0;
+
+    const auto wjump = wR - wL;
+    const auto psijump = psiR - psiL;
+    const auto numerical_flux = euler_CH_EC_flux<1>(stateL, stateR, gamma) * n;
+
+    const double r = wjump * numerical_flux - psijump * n;
+    EXPECT_NEAR(r, 0.0, 1e-10 * (qL.norm() + qR.norm()));
+}
+
 // This tests that the numerical entropy production,
 // eqn (B.56) in Hennemann et al., is nearly zero.
 TEST(EulerFluxTests, EntropyConservationTest1D) {
@@ -123,44 +162,16 @@ TEST(EulerFluxTests, EntropyConservationTest1D) {
     for (unsigned int i = 0; i < 100; i++) {
         auto stateL = random_euler_state<1>(gamma);
         auto stateR = random_euler_state<1>(gamma);
-
-        auto wL = euler_entropy_variables<1>(stateL, gamma);
-        auto wR = euler_entropy_variables<1>(stateR, gamma);
-
-        auto fL = euler_flux<1>(stateL, gamma);
-        auto fR = euler_flux<1>(stateR, gamma);
-
-        auto qL = euler_entropy_flux<1>(stateL, gamma);
-        auto qR = euler_entropy_flux<1>(stateR, gamma);
-
-        // Entropy flux potential
-        Tensor<1, 1, double> psiL;
-        Tensor<1, 1, double> psiR;
-        for (unsigned int d = 0; d < 1; d++) {
-            psiL[d] = 0.0;
-            psiR[d] = 0.0;
-            for (unsigned int c = 0; c < 5; c++) {
-                psiL[d] += wL[c] * fL[c][d];
-                psiR[d] += wR[c] * fR[c][d];
-            }
-            psiL[d] -= qL[d];
-            psiR[d] -= qR[d];
-
-            EXPECT_NEAR(psiL[d], stateL[d+1], 1e-10*stateL.norm());
-            EXPECT_NEAR(psiR[d], stateR[d+1], 1e-10*stateR.norm());
-        }
-
-        Tensor<1, 1, double> n;
-        n[0] = 1.0;
-
-        const auto wjump = wR - wL;
-        const auto psijump = psiR - psiL;
-        const auto numerical_flux = euler_CH_EC_flux<1>(stateL, stateR, gamma) * n;
-
-        const double r = wjump * numerical_flux - psijump * n;
-        EXPECT_NEAR(r, 0.0, 1e-10 * (qL.norm() + qR.norm()));
+        test_entropy_conservation_1d(stateL, stateR, gamma);
     }
+    test_entropy_conservation_1d(
+            Tensor<1, 5, double>({1.0, 1000.0, 0.0, 0.0, 3e6}), 
+            Tensor<1, 5, double>({1.0, 0.0, 0.0, 0.0, 1.0}), gamma);
+    test_entropy_conservation_1d(
+            Tensor<1, 5, double>({1.0, 1.0, 1000.0, 0.0, 2e6}), 
+            Tensor<1, 5, double>({1.0, 0.0, 0.0, 0.0, 1.0}), gamma);
 }
+
 // This tests that the numerical entropy production,
 // eqn (B.56) in Hennemann et al., is nearly zero.
 TEST(EulerFluxTests, EntropyConservationTest2D) {
@@ -219,6 +230,73 @@ TEST(EulerFluxTests, EntropyConservationTest2D) {
         const double r = wjump * numerical_flux - n * psijump;
         EXPECT_NEAR(r, 0.0, 1e-10 * (qL.norm() + qR.norm()));
     }
+}
+
+void test_entropy_dissipation_1d(Tensor<1, 5, double> stateL, Tensor<1, 5, double> stateR, double gamma) {
+    SHOW(stateL);
+    SHOW(stateR);
+
+    auto wL = euler_entropy_variables<2>(stateL, gamma);
+    auto wR = euler_entropy_variables<2>(stateR, gamma);
+    SHOW(wL);
+    SHOW(wR);
+
+    auto fL = euler_flux<2>(stateL, gamma);
+    auto fR = euler_flux<2>(stateR, gamma);
+
+    auto qL = euler_entropy_flux<2>(stateL, gamma);
+    SHOW(qL);
+    auto qR = euler_entropy_flux<2>(stateR, gamma);
+    SHOW(qR);
+
+    // Entropy flux potential
+    Tensor<1, 2, double> psiL;
+    Tensor<1, 2, double> psiR;
+    for (unsigned int d = 0; d < 2; d++) {
+        psiL[d] = 0.0;
+        psiR[d] = 0.0;
+        for (unsigned int c = 0; c < 5; c++) {
+            psiL[d] += wL[c] * fL[c][d];
+            psiR[d] += wR[c] * fR[c][d];
+        }
+        psiL[d] -= qL[d];
+        psiR[d] -= qR[d];
+
+        EXPECT_NEAR(psiL[d], stateL[d+1], 1e-10*stateL.norm());
+        EXPECT_NEAR(psiR[d], stateR[d+1], 1e-10*stateR.norm());
+    }
+
+    SHOW(psiL);
+    SHOW(psiR);
+
+    // Normal direction
+    Tensor<1, 2, double> n;
+    n[0] = rand_01() + 0.1;
+    n[1] = rand_01() + 0.1;
+    n = n / n.norm();
+    EXPECT_NEAR(n*n, 1.0, 1e-15);
+
+    const auto wjump = wR - wL;
+    const auto psijump = psiR - psiL;
+    const auto numerical_flux = euler_CH_entropy_dissipating_flux<2>(stateL, stateR, n, gamma);
+
+    const double r = wjump * numerical_flux - n * psijump;
+    EXPECT_LE(r, 0.0);
+}
+
+// This tests that the numerical entropy production,
+// eqn (B.56) in Hennemann et al., is negative for the entropy dissipating flux.
+TEST(EulerFluxTests, EntropyDissipationTest1D) {
+    double gamma = 5.0 / 3.0;
+    for (unsigned int i = 0; i < 100; i++) {
+        auto stateL = random_euler_state<2>(gamma);
+        auto stateR = random_euler_state<2>(gamma);
+        test_entropy_dissipation_1d(stateL, stateR, gamma);
+    }
+
+    test_entropy_dissipation_1d(
+            Tensor<1, 5, double>({1.0, 1.0, 1000.0, 0.0, 2e6}), 
+            Tensor<1, 5, double>({1.0, 0.0, 0.0, 0.0, 1.0}), gamma);
 }
 
 // This tests that the numerical entropy production,

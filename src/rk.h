@@ -165,8 +165,8 @@ void RK1Integrator<SolutionVec, Operator>::evolve_one_time_step(
     const double dt, const double t) {
     // soln = soln + dt * f(soln)
     forward_euler_operator.perform_forward_euler_step(
-        solution, solution, sol_registers, dt, t);
-    //solution.sadd(0.0, 1.0, soln_scratch);
+        soln_scratch, solution, sol_registers, dt, t);
+    solution.sadd(0.0, 1.0, soln_scratch);
 }
 
 template <typename SolutionVec, typename Operator>

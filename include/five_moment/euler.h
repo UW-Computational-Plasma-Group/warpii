@@ -164,9 +164,9 @@ Tensor<1, 5, Number> euler_entropy_variables(
     Tensor<1, 5, Number> w;
     w[0] = (gamma - s) / (gamma - 1.0) - beta * u2;
     for (unsigned int d = 0; d < 3; d++) {
-        w[d+1] = 2*beta * u[d];
+        w[d+1] = 2.0*beta * u[d];
     }
-    w[4] = -2*beta;
+    w[4] = -2.0*beta;
     return w;
 }
 

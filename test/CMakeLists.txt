@@ -25,6 +25,7 @@ set(TEST_SOURCES
     species_func_test.cc
     cell_evaluators_test.cc
     snowplow_test.cc
+    entropy_stability_test.cc
     # Add more test files here as needed
 )
 

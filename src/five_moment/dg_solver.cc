@@ -53,6 +53,11 @@ FiveMomentDGSolutionHelper<dim>& FiveMomentDGSolver<dim>::get_solution_helper() 
     return solution_helper;
 }
 
+template <int dim>
+FiveMomentExplicitOperator<dim>& FiveMomentDGSolver<dim>::get_explicit_operator() {
+    return explicit_operator;
+}
+
 template class FiveMomentDGSolver<1>;
 template class FiveMomentDGSolver<2>;
 

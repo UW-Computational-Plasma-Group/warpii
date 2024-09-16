@@ -82,10 +82,3 @@ TEST(SnowplowTest, CreatesSnowplowFromFluxInjection) {
     ASSERT_GT(rhou_i_x, 1.8);
 }
 
-TEST(SnowplowTest, LargeTransverseVelocityTransport) {
-    int argc = 0;
-    char** argv = nullptr;
-    Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-
-
-}
