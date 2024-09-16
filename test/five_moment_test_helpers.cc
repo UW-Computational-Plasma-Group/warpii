@@ -1,5 +1,9 @@
 #include "five_moment_test_helpers.h"
 
+SpeciesBuilder neutrals(double mass) {
+    return SpeciesBuilder("neutral", mass, 0.0);
+}
+
 SpeciesBuilder electrons(double mass) {
     return SpeciesBuilder("electron", mass, -1.0);
 }

@@ -17,11 +17,11 @@ class MaxwellBCBuilder {
 
         std::string to_input() {
             std::stringstream input;
-            input << "set Type = " << type << "\n";
+            input << "        set Type = " << type << "\n";
             if (type == "Dirichlet") {
-                input << "subsection DirichletFunction\n" <<
-                    "set components = " << dirichlet_components << "\n" <<
-                    "end\n";
+                input << "        subsection DirichletFunction\n" <<
+                    "            set components = " << dirichlet_components << "\n" <<
+                    "        end\n";
             }
             return input.str();
         }
@@ -47,14 +47,14 @@ class MaxwellFieldsBuilder {
         std::string to_input() {
             std::stringstream input;
             input << "subsection PHMaxwellFields\n" <<
-                "set phmaxwell_chi = " << phmaxwell_chi << "\n" <<
-                "set phmaxwell_gamma = " << phmaxwell_gamma << "\n";
+                "    set phmaxwell_chi = " << phmaxwell_chi << "\n" <<
+                "    set phmaxwell_gamma = " << phmaxwell_gamma << "\n";
             for (unsigned int i = 0; i < bcs.size(); i++) {
-                input << "subsection BoundaryCondition_" << i << "\n" <<
+                input << "    subsection BoundaryCondition_" << i << "\n" <<
                     bcs[i].to_input()
-                    << "\nend\n";
+                    << "    end\n";
             }
-            input << "\nend\n";
+            input << "end\n";
 
             return input.str();
         }
@@ -76,11 +76,11 @@ class SpeciesBCBuilder {
 
     std::string to_input() {
         std::stringstream input;
-        input << "set Type = " << type << "\n";
+        input << "        set Type = " << type << "\n";
         if (type == "Inflow") {
-            input << "subsection InflowFunction\n" <<
-                "set components = " << inflow_components << "\n"
-                "end\n";
+            input << "        subsection InflowFunction\n" <<
+                "        set components = " << inflow_components << "\n"
+                "    end\n";
         }
         return input.str();
     }
@@ -112,17 +112,17 @@ class SpeciesBuilder {
         AssertThrow(!ic_components.empty(), ExcMessage("You have not specified an initial condition for species `" + name + "`"));
 
         std::stringstream input;
-        input << "set name = " << name << "\n"
-              << "set charge = " << charge << "\n"
-              << "set mass = " << mass << "\n"
-              << "subsection InitialCondition\n"
-              << "set VariablesType = Primitive\n"
-              << "set components = " << ic_components << "\n"
-              << "end\n";
+        input << "    set name = " << name << "\n"
+              << "    set charge = " << charge << "\n"
+              << "    set mass = " << mass << "\n"
+              << "    subsection InitialCondition\n"
+              << "        set VariablesType = Primitive\n"
+              << "        set components = " << ic_components << "\n"
+              << "    end\n";
 
         for (unsigned int i = 0; i < bcs.size(); i++) {
-            input << "subsection BoundaryCondition_" << i << "\n" <<
-                bcs[i].to_input() << "\nend\n";
+            input << "    subsection BoundaryCondition_" << i << "\n" <<
+                bcs[i].to_input() << "end\n";
         }
         return input.str();
     }
@@ -135,6 +135,7 @@ class SpeciesBuilder {
     double charge;
 };
 
+SpeciesBuilder neutrals(double mass = 1.0);
 SpeciesBuilder electrons(double mass = 0.04);
 SpeciesBuilder ions(double mass = 1.0, double charge = 1.0);
 
@@ -202,19 +203,18 @@ class FiveMoment1DBuilder {
         input << "set t_end = " << t_end << "\n";
 
         input << "subsection geometry\n" <<
-            "set left = 0\n" <<
-            "set right = " << L << "\n" <<
-            "set nx = " << nx << "\n";
+            "    set left = 0\n" <<
+            "    set right = " << L << "\n" <<
+            "    set nx = " << nx << "\n";
         if (!periodic) {
-            input << "set periodic_dimensions =\n";
+            input << "    set periodic_dimensions =\n";
         }
         input << "end\n";
             
-        input << "subsection Normalization\n"
-                 "set omega_p_tau = "
-              << omega_p_tau << std::endl
-              << "set omega_c_tau = " << omega_c_tau << std::endl
-              << "end\n";
+        input << "subsection Normalization\n" <<
+                 "    set omega_p_tau = " << omega_p_tau << "\n" <<
+                 "    set omega_c_tau = " << omega_c_tau << "\n" <<
+                 "end\n";
 
         input << "set fields_enabled = " << (fields_enabled ? "true" : "false") << "\n";
         if (fields_enabled) {
@@ -224,7 +224,7 @@ class FiveMoment1DBuilder {
         for (unsigned int i = 0; i < species.size(); i++) {
             input << "subsection Species_" << i << "\n";
             input << species[i].to_input();
-            input << "\nend\n";
+            input << "end\n";
         }
 
         std::cout << input.str();
