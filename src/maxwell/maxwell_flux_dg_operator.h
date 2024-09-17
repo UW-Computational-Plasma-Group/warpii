@@ -36,9 +36,9 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
           fields(fields),
           constants(fields->phmaxwell_constants()) {}
 
-    void perform_forward_euler_step(SolutionVec &dst, const SolutionVec &u,
+    TimestepResult perform_forward_euler_step(SolutionVec &dst, const SolutionVec &u,
                                     std::vector<SolutionVec> &sol_registers,
-                                    const double dt, const double t,
+                                    const TimestepRequest dt, const double t,
                                     const double b = 0.0, const double a = 1.0,
                                     const double c = 1.0) override;
 
@@ -81,9 +81,10 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
 };
 
 template <int dim, typename SolutionVec>
-void MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_step(
+TimestepResult MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_step(
     SolutionVec &dst, const SolutionVec &u,
-    std::vector<SolutionVec> &sol_registers, const double dt, const double t,
+    std::vector<SolutionVec> &sol_registers, 
+    const TimestepRequest dt_request, const double t,
     const double b, const double a, const double c) {
     auto Mdudt_register = sol_registers.at(0);
     auto dudt_register = sol_registers.at(1);
@@ -115,10 +116,12 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_step(
                     const double dst_i = dst.mesh_sol.local_element(i);
                     const double u_i = u.mesh_sol.local_element(i);
                     dst.mesh_sol.local_element(i) =
-                        b * dst_i + a * u_i + c * dt * dudt_i;
+                        b * dst_i + a * u_i + c * dt_request.requested_dt * dudt_i;
                 }
             });
     }
+
+    return TimestepResult::success(dt_request);
 }
 
 template <int dim, typename SolutionVec>

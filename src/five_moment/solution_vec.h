@@ -9,6 +9,8 @@ namespace warpii {
     namespace five_moment {
         class FiveMBoundaryIntegratedFluxesVector {
             public:
+                void swap(FiveMBoundaryIntegratedFluxesVector& other);
+
                 template <int dim>
                 void add(unsigned int boundary_id, Tensor<1, 5, double> flux);
 
@@ -48,6 +50,8 @@ namespace warpii {
                 FiveMBoundaryIntegratedFluxesVector boundary_integrated_fluxes;
 
             void reinit(const FiveMSolutionVec& other);
+
+            void swap(FiveMSolutionVec& other);
 
             void sadd(const double s, const double a, const FiveMSolutionVec& V);
         };

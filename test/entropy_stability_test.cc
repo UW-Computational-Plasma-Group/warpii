@@ -88,7 +88,8 @@ TEST(EntropyStabilityTest, PeriodicShockTube) {
 
     auto registers = solution_registers(soln);
     const double dt = 1e-4;
-    explicit_op.perform_forward_euler_step(dst, soln, registers, dt, 0.0);
+    const TimestepRequest request = TimestepRequest(dt, false);
+    explicit_op.perform_forward_euler_step(dst, soln, registers, request, 0.0);
 
     FiveMSolutionVec dudt;
     dudt.reinit(soln);
@@ -132,7 +133,8 @@ TEST(EntropyStabilityTest, LargeVelocity) {
 
     auto registers = solution_registers(soln);
     const double dt = 1e-4;
-    explicit_op.perform_forward_euler_step(dst, soln, registers, dt, 0.0);
+    const TimestepRequest request = TimestepRequest(dt, false);
+    explicit_op.perform_forward_euler_step(dst, soln, registers, request, 0.0);
 
     FiveMSolutionVec dudt;
     dudt.reinit(soln);

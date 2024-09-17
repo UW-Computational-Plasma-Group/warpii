@@ -9,9 +9,10 @@ namespace warpii {
 namespace five_moment {
 
 template <int dim>
-void FiveMomentExplicitSourceOperator<dim>::perform_forward_euler_step(
+TimestepResult FiveMomentExplicitSourceOperator<dim>::perform_forward_euler_step(
         FiveMSolutionVec &dst, const FiveMSolutionVec &u,
-        std::vector<FiveMSolutionVec> &sol_registers, const double dt,
+        std::vector<FiveMSolutionVec> &sol_registers, 
+        const TimestepRequest dt_request,
         const double t, 
         const double b, const double a, const double c) {
 
@@ -42,16 +43,19 @@ void FiveMomentExplicitSourceOperator<dim>::perform_forward_euler_step(
                     const double dst_i = dst.mesh_sol.local_element(i);
                     const double u_i = u.mesh_sol.local_element(i);
                     dst.mesh_sol.local_element(i) =
-                        b * dst_i + a * u_i + c * dt * dudt_i;
+                        b * dst_i + a * u_i + c * dt_request.requested_dt * dudt_i;
                 }
             });
         // dst = beta * dest + a * u + c * dt * dudt
         if (!dst.boundary_integrated_fluxes.is_empty()) {
             dst.boundary_integrated_fluxes.sadd(b, a, u.boundary_integrated_fluxes);
             dst.boundary_integrated_fluxes.sadd(
-                1.0, c * dt, dudt_register.boundary_integrated_fluxes);
+                1.0, c * dt_request.requested_dt, 
+                dudt_register.boundary_integrated_fluxes);
         }
     }
+
+    return TimestepResult::success(dt_request);
 }
 
 template <int dim>

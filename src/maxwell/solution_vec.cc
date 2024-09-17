@@ -8,5 +8,9 @@ namespace maxwell {
     void MaxwellSolutionVec::reinit(const MaxwellSolutionVec& other) {
         mesh_sol.reinit(other.mesh_sol);
     }
+
+    void MaxwellSolutionVec::swap(MaxwellSolutionVec& other) {
+        mesh_sol.swap(other.mesh_sol);
+    }
 }  // namespace maxwell
 }  // namespace warpii

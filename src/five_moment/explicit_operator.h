@@ -30,11 +30,11 @@ class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec>
             maxwell_flux(discretization, 5*species.size(), fields)
         {}
 
-    void perform_forward_euler_step(
+    TimestepResult perform_forward_euler_step(
         FiveMSolutionVec &dst,
         const FiveMSolutionVec &u,
         std::vector<FiveMSolutionVec> &sol_registers,
-        const double dt, const double t, 
+        const TimestepRequest dt, const double t, 
         const double b = 0.0,
         const double a = 1.0,
         const double c = 1.0) override;

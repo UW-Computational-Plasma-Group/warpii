@@ -20,9 +20,11 @@ void PHMaxwellDGSolver<dim>::project_initial_condition() {
 template <int dim>
 void PHMaxwellDGSolver<dim>::solve(TimestepCallback writeout_callback) {
     auto step = [&](double t, double dt) -> bool {
-        ssp_integrator.evolve_one_time_step(flux_operator, solution, dt, t);
+        TimestepRequest request(dt, true);
+        const TimestepResult result = ssp_integrator.evolve_one_time_step(
+                flux_operator, solution, request, t);
         std::cout << "t = " << t << std::endl;
-        return true;
+        return result.successful;
     };
     auto recommend_dt = [&]() -> double {
         return flux_operator.recommend_dt(
