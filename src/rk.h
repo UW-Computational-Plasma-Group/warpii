@@ -221,12 +221,13 @@ TimestepResult SSPRK2Integrator<SolutionVec, Operator>::evolve_one_time_step(
     SolutionVec& solution,
     const TimestepRequest dt_request,
     const double t) {
+    solution_scratch.swap(solution);
 
     const TimestepRequest request_1(dt_request.requested_dt, dt_request.is_flexible);
 
     // f_1 = soln + dt * f(soln)
     const auto result_1 = forward_euler_operator.perform_forward_euler_step(
-        f_1, solution, sol_registers, request_1, t);
+        f_1, solution_scratch, sol_registers, request_1, t);
     if (!result_1.successful) {
         return TimestepResult::failure(dt_request.requested_dt);
     }
@@ -249,6 +250,7 @@ void SSPRK2Integrator<SolutionVec, Operator>::reinit(
     const SolutionVec& sol,
     int sol_register_count) {
     f_1.reinit(sol);
+    solution_scratch.reinit(sol);
     for (int i = 0; i < sol_register_count; i++) {
         sol_registers.emplace_back();
         sol_registers[i].reinit(sol);

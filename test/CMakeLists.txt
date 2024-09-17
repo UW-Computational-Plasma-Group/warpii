@@ -26,6 +26,7 @@ set(TEST_SOURCES
     cell_evaluators_test.cc
     snowplow_test.cc
     entropy_stability_test.cc
+    rk_test.cc
     # Add more test files here as needed
 )
 
