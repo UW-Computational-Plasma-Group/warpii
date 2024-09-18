@@ -12,5 +12,9 @@ namespace maxwell {
     void MaxwellSolutionVec::swap(MaxwellSolutionVec& other) {
         mesh_sol.swap(other.mesh_sol);
     }
+
+    void MaxwellSolutionVec::sadd(double s, double a, MaxwellSolutionVec V) {
+        mesh_sol.sadd(s, a, V.mesh_sol);
+    }
 }  // namespace maxwell
 }  // namespace warpii

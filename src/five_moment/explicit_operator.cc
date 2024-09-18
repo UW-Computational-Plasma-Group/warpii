@@ -17,6 +17,9 @@ TimestepResult FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
     // dst1 = b*dst + a*u + c*dt*f1(u)
     const auto fluid_flux_result = fluid_flux.perform_forward_euler_step(
             dst, u, sol_registers, dt_request, t, b, a, c);
+    if (!fluid_flux_result.successful) {
+        return TimestepResult::failure(dt_request.requested_dt);
+    }
 
     const auto inflexible_request = TimestepRequest(fluid_flux_result.achieved_dt, false);
     if (fields_enabled) {
@@ -36,6 +39,8 @@ TimestepResult FiveMomentExplicitOperator<dim>::perform_forward_euler_step(
     if (!result_3.successful) {
         return TimestepResult::failure(dt_request.requested_dt);
     }
+
+    fluid_flux.apply_positivity_limiter(dst);
 
     return TimestepResult(dt_request.requested_dt, true, fluid_flux_result.achieved_dt);
 }

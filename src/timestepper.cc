@@ -31,11 +31,13 @@ namespace warpii {
 
             // Put 1e-12 of slosh into the timestepping so we don't accidentally
             // step over by a whole dt, or take a "stutter step" of 1e-13.
+            dt = fmin(recommend_dt(), next_stop - t);
             while (t < next_stop - 1e-12) {
-                dt = fmin(recommend_dt(), next_stop - t);
                 bool succeeded = step(t, dt);
-                if (!succeeded) {
-                    continue;
+                if (succeeded) {
+                    dt = fmin(recommend_dt(), next_stop - t);
+                } else {
+                    dt *= 0.75;
                 }
 
                 t += dt;

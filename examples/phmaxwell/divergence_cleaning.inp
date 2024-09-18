@@ -1,0 +1,33 @@
+set Application = PerfectlyHyperbolicMaxwell
+set n_dims = 1
+set t_end = 0.1
+set write_output = true
+set n_writeout_frames = 100
+
+set fe_degree = 2
+set n_boundaries = 2
+
+subsection geometry
+    set left = -1.0
+    set right = 1.0
+    set nx = 100
+    set periodic_dimensions =
+end
+
+subsection Normalization
+    set omega_p_tau = 3.0
+end
+
+subsection PHMaxwellFields
+    set phmaxwell_chi = 2.4
+
+    subsection InitialCondition
+        set components = x > 0 ? 2.0 : 1.0; 0; 0; 0; 0; 0; x > 0 ? -1.0 : 0.0; 0.0
+    end
+    subsection BoundaryCondition_0
+        set Type = PerfectConductor
+    end
+    subsection BoundaryCondition_1
+        set Type = PerfectConductor
+    end
+end

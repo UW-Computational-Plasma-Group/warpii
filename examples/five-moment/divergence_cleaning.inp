@@ -1,0 +1,81 @@
+set Application = FiveMoment
+set n_dims = 1
+set t_end = 5.0
+
+set write_output = true
+set n_writeout_frames = 100
+
+set fe_degree = 2
+
+set fields_enabled = true
+
+set n_boundaries = 2
+set n_species = 2
+
+set ExplicitIntegrator = SSPRK2
+
+set Subexpressions = n_i(x) := if(abs(x) < 20, 1.1, 1.0);; \
+                     n_e(x) := 1.0
+
+subsection geometry
+    set left = -50.0
+    set right = 50.0
+    set nx = 100
+    set periodic_dimensions = y
+end
+
+subsection Normalization
+    set omega_p_tau = 10.0
+end
+
+subsection PHMaxwellFields
+    set phmaxwell_chi = 2.0
+
+    subsection InitialCondition
+        set components = 0; 0.0; 0; \
+                         0; 0; 0; \
+                         0; 0
+    end
+    subsection BoundaryCondition_0
+        set Type = PerfectConductor
+    end
+    subsection BoundaryCondition_1
+        set Type = PerfectConductor
+    end
+end
+
+subsection Species_0
+    set name = electron
+    set charge = -1.0
+    set mass = 1e14
+
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1e14 * n_e(x); 0.0; 0.0; 0.0; n_e(x)
+    end
+
+    subsection BoundaryCondition_0
+        set Type = Wall
+    end
+    subsection BoundaryCondition_1
+        set Type = Wall
+    end
+end
+
+subsection Species_1
+    set name = ion
+    set charge = 1.0
+    set mass = 1e14
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1e14 * n_i(x); 0.0; 0.0; 0.0; n_i(x)
+    end
+
+    subsection BoundaryCondition_0
+        set Type = Wall
+    end
+    subsection BoundaryCondition_1
+        set Type = Wall
+    end
+end
+

@@ -1,15 +1,17 @@
 set Application = FiveMoment
 set n_dims = 1
-set fe_degree = 2
+set fe_degree = 3
 
-set t_end = 1.0
+set t_end = 0.04
 
 set ExplicitIntegrator = SSPRK2
+
+set n_writeout_frames = 100
 
 subsection geometry
     set left = 0
     set right = 10
-    set nx = 100
+    set nx = 200
     set periodic_dimensions =
 end
 
@@ -26,7 +28,7 @@ subsection Species_0
     subsection BoundaryCondition_0
         set Type = Inflow
         subsection InflowFunction
-            set components = .04; 0; 0; 0; 1.0
+            set components = .04; 1; 0; 0; 18.0
         end
     end
 end
@@ -41,13 +43,13 @@ subsection Species_1
     subsection BoundaryCondition_0
         set Type = Inflow
         subsection InflowFunction
-            set components = .04; 0; 0; 0; 1.0
+            set components = 1.0; 1; 0; 0; 18.0
         end
     end
 end
 
 subsection Normalization
-    set omega_p_tau = 10
+    set omega_p_tau = 40
 end
 
 subsection PHMaxwellFields
@@ -56,7 +58,7 @@ subsection PHMaxwellFields
     subsection BoundaryCondition_0
         set Type = Dirichlet
         subsection DirichletFunction
-            set components = 0; 0; 0; 0; 0; 1.0; 0; 0
+            set components = 0; 0; 0; 0; 0; 4.0; 0; 0
         end
     end
 end
