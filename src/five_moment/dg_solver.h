@@ -84,6 +84,8 @@ class FiveMomentDGSolver {
 
     FiveMSolutionVec& get_solution();
 
+    FiveMomentExplicitOperator<dim>& get_explicit_operator();
+
    private:
     double t_end;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;

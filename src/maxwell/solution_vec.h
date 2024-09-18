@@ -10,6 +10,8 @@ class MaxwellSolutionVec {
     LinearAlgebra::distributed::Vector<double> mesh_sol;
 
     void reinit(const MaxwellSolutionVec& other);
+
+    void swap(MaxwellSolutionVec& other);
 };
 }  // namespace maxwell
 }  // namespace warpii

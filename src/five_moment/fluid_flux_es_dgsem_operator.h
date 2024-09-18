@@ -65,9 +65,10 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
     {
     }
 
-    void perform_forward_euler_step(
+    TimestepResult perform_forward_euler_step(
         FiveMSolutionVec &dst, const FiveMSolutionVec &u,
-        std::vector<FiveMSolutionVec> &sol_registers, const double dt,
+        std::vector<FiveMSolutionVec> &sol_registers, 
+        const TimestepRequest dt_request,
         const double t, 
         const double b=0.0, const double a=1.0, const double c=1.0) override;
 
@@ -106,6 +107,14 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         const MatrixFree<dim, double> &mf,
         const LinearAlgebra::distributed::Vector<double> &sol) const;
 
+    /**
+     * Checks if the solution is positive:
+     *    - Pressure and density are everywhere positive
+     */
+    bool check_if_solution_is_positive(
+            const MatrixFree<dim, double> &mf,
+            const LinearAlgebra::distributed::Vector<double> &sol) const;
+
     void calculate_high_order_EC_flux(
         LinearAlgebra::distributed::Vector<double> &dst,
         FEEvaluation<dim, -1, 0, 5, double> &phi,
@@ -133,10 +142,12 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
 };
 
 template <int dim>
-void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
+TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
     FiveMSolutionVec &dst, const FiveMSolutionVec &u,
-    std::vector<FiveMSolutionVec> &sol_registers, const double dt,
-    const double t, const double b, const double a, const double c) {
+    std::vector<FiveMSolutionVec> &sol_registers, 
+    const TimestepRequest dt_request,
+    const double t, 
+    const double b, const double a, const double c) {
     using Iterator = typename DoFHandler<1>::active_cell_iterator;
 
     auto Mdudt_register = sol_registers.at(0);
@@ -204,27 +215,43 @@ void FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
     }
 
     {
-        discretization->mf.cell_loop(
-            &FluidFluxESDGSEMOperator<dim>::local_apply_inverse_mass_matrix,
-            this, dudt_register.mesh_sol, Mdudt_register.mesh_sol,
-            std::function<void(const unsigned int, const unsigned int)>(),
-            [&](const unsigned int start_range, const unsigned int end_range) {
-                /* DEAL_II_OPENMP_SIMD_PRAGMA */
-                for (unsigned int i = start_range; i < end_range; ++i) {
-                    const double dudt_i =
-                        dudt_register.mesh_sol.local_element(i);
-                    const double dst_i = dst.mesh_sol.local_element(i);
-                    const double u_i = u.mesh_sol.local_element(i);
-                    dst.mesh_sol.local_element(i) =
-                        b * dst_i + a * u_i + c * dt * dudt_i;
-                }
-            });
-        // dst = beta * dest + a * u + c * dt * dudt
-        if (!dst.boundary_integrated_fluxes.is_empty()) {
-            dst.boundary_integrated_fluxes.sadd(b, a, u.boundary_integrated_fluxes);
-            dst.boundary_integrated_fluxes.sadd(
-                1.0, c * dt, dudt_register.boundary_integrated_fluxes);
+        double dt = dt_request.requested_dt;
+
+        for (unsigned int attempt = 0; attempt < 10; attempt++) {
+            discretization->mf.cell_loop(
+                &FluidFluxESDGSEMOperator<dim>::local_apply_inverse_mass_matrix,
+                this, dudt_register.mesh_sol, Mdudt_register.mesh_sol,
+                std::function<void(const unsigned int, const unsigned int)>(),
+                [&](const unsigned int start_range, const unsigned int end_range) {
+                    /* DEAL_II_OPENMP_SIMD_PRAGMA */
+                    for (unsigned int i = start_range; i < end_range; ++i) {
+                        const double dudt_i =
+                            dudt_register.mesh_sol.local_element(i);
+                        const double dst_i = dst.mesh_sol.local_element(i);
+                        const double u_i = u.mesh_sol.local_element(i);
+                        dst.mesh_sol.local_element(i) =
+                            b * dst_i + a * u_i + c * dt * dudt_i;
+                    }
+                });
+            // dst = beta * dest + a * u + c * dt * dudt
+            if (!dst.boundary_integrated_fluxes.is_empty()) {
+                dst.boundary_integrated_fluxes.sadd(b, a, u.boundary_integrated_fluxes);
+                dst.boundary_integrated_fluxes.sadd(
+                    1.0, c * dt, dudt_register.boundary_integrated_fluxes);
+            }
+
+            if (check_if_solution_is_positive(discretization->get_matrix_free(), dst.mesh_sol)) {
+                return TimestepResult(dt_request.requested_dt, true, dt);
+            } else if (!dt_request.is_flexible) {
+                std::cout << "Failing step due to non-positivity" << std::endl;
+                return TimestepResult::failure(dt_request.requested_dt);
+            } else {
+                std::cout << "Retrying step due to non-positivity" << std::endl;
+                dt *= 0.75;
+            }
         }
+        std::cout << "Could not find a positivity-preserving timestep after 10 attempts, giving up" << std::endl;
+        return TimestepResult::failure(dt_request.requested_dt);
     }
 }
 
@@ -581,6 +608,34 @@ double FluidFluxESDGSEMOperator<dim>::compute_cell_transport_speed(
     max_transport = Utilities::MPI::max(max_transport, MPI_COMM_WORLD);
 
     return max_transport;
+}
+
+template <int dim>
+bool FluidFluxESDGSEMOperator<dim>::check_if_solution_is_positive(
+    const MatrixFree<dim, double> &mf,
+    const LinearAlgebra::distributed::Vector<double> &sol) const {
+    for (unsigned int species_index = 0; species_index < n_species;
+         species_index++) {
+        unsigned int first_component = species_index * (5);
+
+        FEEvaluation<dim, -1, 0, 5, Number> phi(mf, 0, 1,
+                                                      first_component);
+
+        for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
+            phi.reinit(cell);
+            phi.gather_evaluate(sol, EvaluationFlags::values);
+            for (const unsigned int q : phi.quadrature_point_indices()) {
+                const auto solution = phi.get_value(q);
+                const auto pressure = euler_pressure<dim>(solution, gas_gamma);
+                for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
+                    if (solution[0][lane] < 1e-12 || pressure[lane] < 1e-12) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
 
 }  // namespace five_moment
