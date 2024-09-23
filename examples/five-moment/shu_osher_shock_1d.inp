@@ -8,10 +8,14 @@ set fe_degree = 4
 set n_species = 1
 set n_boundaries = 2
 
+set gas_gamma = 1.4
+
+set ExplicitIntegrator = SSPRK2
+
 subsection geometry
     set left = -5.0
     set right = 5.0
-    set nx = 150
+    set nx = 256
     set periodic_dimensions =
 end
 
