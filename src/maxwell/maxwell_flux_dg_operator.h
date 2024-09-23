@@ -19,6 +19,7 @@
 #include "function_eval.h"
 #include "geometry.h"
 #include "maxwell.h"
+#include "maxwell/extension.h"
 
 using namespace dealii;
 
@@ -30,11 +31,12 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
     MaxwellFluxDGOperator(
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
         unsigned int first_component_index,
-        std::shared_ptr<PHMaxwellFields<dim>> fields)
+        std::shared_ptr<PHMaxwellFields<dim>> fields        )
         : discretization(discretization),
           first_component_index(first_component_index),
           fields(fields),
-          constants(fields->phmaxwell_constants()) {}
+          constants(fields->phmaxwell_constants())
+    {}
 
     TimestepResult perform_forward_euler_step(SolutionVec &dst, const SolutionVec &u,
                                     std::vector<SolutionVec> &sol_registers,
@@ -50,6 +52,7 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
     unsigned int first_component_index;
     std::shared_ptr<PHMaxwellFields<dim>> fields;
     PHMaxwellConstants constants;
+    double time;
 
     void local_apply_inverse_mass_matrix(
         const MatrixFree<dim, double> &mf,
@@ -98,7 +101,7 @@ TimestepResult MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_st
         MatrixFree<dim, double>::DataAccessOnFaces::values,
         MatrixFree<dim, double>::DataAccessOnFaces::values);
 
-    for (auto &bc : fields->get_bc_map().get_dirichlet_bcs()) {
+    for (auto &bc : fields->get_bc_map().get_function_bcs()) {
         bc.second.func->set_time(t);
     }
 
@@ -267,6 +270,23 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
                 const auto& func = fields->get_bc_map().get_dirichlet_func(boundary_id);
                 val_bdy = evaluate_function<dim, 8>(*func.func, p);
                 val_p = 2.0*val_bdy - val_m;
+            } else if (bc_type == MaxwellBCType::FLUX_INJECTION) {
+                // Copy out all components
+                val_p = val_m;
+                // Except for B
+                const auto p = fe_eval_m.quadrature_point(q);
+                const auto& func = fields->get_bc_map().get_flux_injection_func(boundary_id);
+                val_bdy = evaluate_function<dim, 8>(*func.func, p);
+                val_p[0] = val_m[0];
+                // Set E_y = cB_z, according to the eigendecomposition.
+                // This corresponds to setting the right-going wave to a certain
+                // value, and the left-going wave to zero.
+                val_p[1] = constants.c * val_bdy[5];
+                // E_z = -cB_y, corresponding to the right-going wave.
+                val_p[2] = -constants.c * val_bdy[4];
+                val_p[3] = val_bdy[3];
+                val_p[4] = val_bdy[4];
+                val_p[5] = val_bdy[5];
             }
 
             const auto numerical_flux = ph_maxwell_numerical_flux(val_m, val_p, n, constants);

@@ -38,8 +38,17 @@ void PHMaxwellFields<dim>::declare_parameters(ParameterHandler &prm,
                 "with `boundary_id == i`.", true);
 
         prm.declare_entry("Type", "Dirichlet",
-                          Patterns::Selection("CopyOut|PerfectConductor|Dirichlet"));
+                          Patterns::Selection("CopyOut|PerfectConductor|Dirichlet|FluxInjection"),
+                          R"(The type of boundary condition.
+- `CopyOut`: copies out all values except for the divergence cleaning Lagrange multipliers, which are set to zero at the boundary.
+- `PerfectConductor`: The tangential electric field and normal magnetic field are set to zero. Normal E and tangential B are copied out. Divergence cleaning components are set to zero.
+- `Dirichlet`: A Dirichlet boundary condition whose components are given by [DirichletFunction](#DirichletFunction).
+- `FluxInjection`: )");
+
         prm.enter_subsection("DirichletFunction");
+        PHMaxwellFunc<dim>::declare_parameters(prm);
+        prm.leave_subsection();
+        prm.enter_subsection("FluxInjectionFunction");
         PHMaxwellFunc<dim>::declare_parameters(prm);
         prm.leave_subsection();
 
@@ -84,6 +93,11 @@ PHMaxwellFields<dim>::create_from_parameters(SimulationInput &input,
             auto func = PHMaxwellFunc<dim>::create_from_parameters(input);
             prm.leave_subsection();
             bc_map.set_dirichlet_boundary(boundary_id, std::move(func));
+        } else if (bc_type == "FluxInjection") {
+            prm.enter_subsection("FluxInjectionFunction");
+            auto func = PHMaxwellFunc<dim>::create_from_parameters(input);
+            prm.leave_subsection();
+            bc_map.set_flux_injection_boundary(boundary_id, std::move(func));
         }
         prm.leave_subsection();  // BoundaryConditions
     }
