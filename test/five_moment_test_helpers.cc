@@ -18,5 +18,9 @@ SpeciesBCBuilder inflow_bc(std::string c) {
 }
 
 MaxwellBCBuilder maxwell_dirichlet_bc(std::string c) {
-    return MaxwellBCBuilder("Dirichlet").with_dirichlet_components(c);
+    return MaxwellBCBuilder("Dirichlet").with_function_components(c);
+}
+
+MaxwellBCBuilder maxwell_flux_injection_bc(std::string c) {
+    return MaxwellBCBuilder("FluxInjection").with_function_components(c);
 }

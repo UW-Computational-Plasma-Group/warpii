@@ -10,8 +10,8 @@ class MaxwellBCBuilder {
     public:
         MaxwellBCBuilder(std::string type): type(type) {}
 
-        MaxwellBCBuilder& with_dirichlet_components(std::string c) {
-            this->dirichlet_components = c;
+        MaxwellBCBuilder& with_function_components(std::string c) {
+            this->function_components = c;
             return *this;
         }
 
@@ -20,7 +20,12 @@ class MaxwellBCBuilder {
             input << "        set Type = " << type << "\n";
             if (type == "Dirichlet") {
                 input << "        subsection DirichletFunction\n" <<
-                    "            set components = " << dirichlet_components << "\n" <<
+                    "            set components = " << function_components << "\n" <<
+                    "        end\n";
+            }
+            if (type == "FluxInjection") {
+                input << "        subsection FluxInjectionFunction\n" <<
+                    "            set components = " << function_components << "\n" <<
                     "        end\n";
             }
             return input.str();
@@ -28,10 +33,11 @@ class MaxwellBCBuilder {
 
     private:
         std::string type;
-        std::string dirichlet_components;
+        std::string function_components;
 };
 
 MaxwellBCBuilder maxwell_dirichlet_bc(std::string components);
+MaxwellBCBuilder maxwell_flux_injection_bc(std::string components);
 
 class MaxwellFieldsBuilder {
     public:
