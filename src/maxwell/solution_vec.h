@@ -12,6 +12,8 @@ class MaxwellSolutionVec {
     void reinit(const MaxwellSolutionVec& other);
 
     void swap(MaxwellSolutionVec& other);
+
+    void sadd(double s, double a, MaxwellSolutionVec V);
 };
 }  // namespace maxwell
 }  // namespace warpii

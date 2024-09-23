@@ -27,5 +27,8 @@ class TimestepResult {
         // If successful, the dt that was actually achieved.
         // Solution vectors have been advanced by this much.
         double achieved_dt;
+        // If unsucessful, a suggestion for the dt that should be attempted on
+        // the next go-round.
+        double recommended_dt;
 };
 }

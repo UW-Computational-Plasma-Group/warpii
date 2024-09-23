@@ -83,7 +83,7 @@ double PerssonPeraireShockIndicator<dim>::compute_shock_indicator(
             return std::make_pair(false, 3);
         }
     };
-    const std::pair<std::vector<unsigned int>, std::vector<double>>
+    const std::pair<std::vector<unsigned int>, std::vector<double>>&
         grouped_coefs =
             FESeries::process_coefficients(legendre_coefs, group_leading_coefs,
                                            VectorTools::NormType::L2_norm);

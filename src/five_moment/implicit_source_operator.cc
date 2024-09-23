@@ -37,6 +37,8 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &cell_range) const {
     unsigned int n_species = species.size();
+
+    const double omega_p_tau = plasma_norm.omega_p_tau;
     const double omega_c_tau = plasma_norm.omega_c_tau;
 
     std::vector<FEEvaluation<dim, -1, 0, 5, double>> species_evals;
@@ -53,14 +55,15 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
     FullMatrix<double> IxB(3);
 
-    FullMatrix<double> omega_p_tau_scaling(3);
+    FullMatrix<double> identity_3(3);
     for (unsigned int i = 0; i < 3; i++) {
-        omega_p_tau_scaling(i, i) = plasma_norm.omega_p_tau;
+        identity_3(i, i) = 1.0;
         IxB(i, i) = 0.0;
     }
     // Populate constant parts of the local matrix
+    // Top row of the matrix.
     for (unsigned int i = 0; i < n_species; i++) {
-        L.fill(omega_p_tau_scaling, 0, 3 + 3 * i, 0, 0, -1.0);
+        L.fill(identity_3, 0, 3 + 3 * i, 0, 0, -omega_p_tau * omega_p_tau / omega_c_tau);
     }
 
     Vector<double> RHS(3 * n_species + 3);
@@ -104,8 +107,9 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                     const double Z_i = species[i]->charge;
                     const double A_i = species[i]->mass;
                     auto rho_i = species_evals[i].get_dof_value(dof)[0][lane];
+                    const auto n_i = rho_i / A_i;
 
-                    L.fill(omega_p_tau_scaling, 3 + 3 * i, 0, 0, 0, rho_i * Z_i * Z_i / A_i / A_i);
+                    L.fill(identity_3, 3 + 3 * i, 0, 0, 0, n_i * Z_i * Z_i / A_i * omega_c_tau);
                     L.fill(IxB, 3 + 3 * i, 3 + 3 * i, 0, 0,
                            omega_c_tau * Z_i / A_i);
                 }
@@ -114,7 +118,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                 for (unsigned int i = 0; i < 3 * n_species + 3; i++) {
                     M(i, i) += 1.0;
                 }
-                M.add(-dt, L);
+                M.add(-dt/2.0, L);
                 M.compute_lu_factorization();
 
                 // Form Vector that contains the RHS
@@ -147,7 +151,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
             field_vals = fields_eval.get_dof_value(dof);
             for (unsigned int d = 0; d < 3; d++) {
-                field_vals[d] = 1.0 * E_n_plus_1_2[d] - 0.0*field_vals[d];
+                field_vals[d] = 2.0 * E_n_plus_1_2[d] - 1.0*field_vals[d];
             }
             fields_eval.submit_dof_value(field_vals, dof);
 
@@ -158,7 +162,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                 VectorizedArray<double> new_KE = VectorizedArray(0.0);
                 for (unsigned int d = 0; d < 3; d++) {
                     old_KE += 0.5 * species_vals[d+1] * species_vals[d+1] / species_vals[0];
-                    species_vals[d+1] = 1.0 * rhou_n_plus_1_2[i][d] - 0.0*species_vals[d+1];
+                    species_vals[d+1] = 2.0 * rhou_n_plus_1_2[i][d] - 1.0*species_vals[d+1];
                     new_KE += 0.5 * species_vals[d+1] * species_vals[d+1] / species_vals[0];
                 }
                 VectorizedArray<double> internal_energy = species_vals[4] - old_KE;

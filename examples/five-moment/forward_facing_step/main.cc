@@ -4,9 +4,9 @@
 #include <deal.II/grid/grid_generator.h>
 
 #include <iostream>
-#include <src/five_moment/extension.h>
+#include <five_moment/extension.h>
 #include <src/grid_generation.h>
-#include <src/warpii.h>
+#include <warpii.h>
 
 using namespace dealii;
 using namespace warpii;

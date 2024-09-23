@@ -6,6 +6,8 @@ set fields_enabled = false
 set fe_degree = 4
 
 set n_boundaries = 6
+set n_species = 1
+
 subsection geometry
     set GridType = Extension
     set RefinementFactor = 2
@@ -18,20 +20,19 @@ set n_writeout_frames = 100
 subsection Species_0
     subsection InitialCondition
         set VariablesType = Primitive
-        set Function expression = 1.4; 3.0; 0.0; 1.0
+        set components = 1.4; 3.0; 0.0; 0; 1.0
     end
 
-    subsection BoundaryConditions
-        set 0 = Inflow
-        set 1 = Wall
-        set 2 = Wall
-        set 3 = Wall
-        set 4 = Outflow
-        set 5 = Wall
+    subsection BoundaryCondition_0
+        set Type = Inflow
 
-        subsection 0_Inflow
+        subsection InflowFunction
             set VariablesType = Primitive
-            set Function expression = 1.4; 3.0; 0.0; 1.0
+            set components = 1.4; 3.0; 0.0; 0; 1.0
         end
+    end
+
+    subsection BoundaryCondition_4
+        set Type = Outflow
     end
 end

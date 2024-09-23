@@ -75,6 +75,8 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
     double recommend_dt(const MatrixFree<dim, double> &mf,
                         const FiveMSolutionVec &sol);
 
+    void apply_positivity_limiter(FiveMSolutionVec& soln);
+
    private:
     void local_apply_inverse_mass_matrix(
         const MatrixFree<dim, double> &mf,
@@ -102,6 +104,12 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         const std::pair<unsigned int, unsigned int> &face_range,
         FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes,
         const double t) const;
+
+    void local_apply_positivity_limiter(
+        const MatrixFree<dim, double> &mf,
+        LinearAlgebra::distributed::Vector<double> &dst,
+        const LinearAlgebra::distributed::Vector<double> &src,
+        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
     double compute_cell_transport_speed(
         const MatrixFree<dim, double> &mf,
@@ -154,6 +162,15 @@ TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
     auto dudt_register = sol_registers.at(1);
     auto sol_before_limiting = sol_registers.at(2);
     dudt_register.mesh_sol = 0.0;
+
+    if (!check_if_solution_is_positive(discretization->get_matrix_free(), u.mesh_sol)) {
+        std::cout << "u is already negative pressure" << std::endl;
+    }
+    /*
+    if (!check_if_solution_is_positive(discretization->get_matrix_free(), dst.mesh_sol)) {
+        std::cout << "dst is already negative pressure" << std::endl;
+    }
+    */
 
     {
         for (auto sp : species) {
@@ -253,6 +270,13 @@ TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
         std::cout << "Could not find a positivity-preserving timestep after 10 attempts, giving up" << std::endl;
         return TimestepResult::failure(dt_request.requested_dt);
     }
+}
+
+template <int dim>
+void FluidFluxESDGSEMOperator<dim>::apply_positivity_limiter(FiveMSolutionVec &soln) {
+    discretization->mf.cell_loop(
+            &FluidFluxESDGSEMOperator<dim>::local_apply_positivity_limiter,
+            this, soln.mesh_sol, soln.mesh_sol);
 }
 
 template <int dim>
@@ -537,8 +561,141 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
 }
 
 template <int dim>
+void FluidFluxESDGSEMOperator<dim>::local_apply_positivity_limiter(
+    const MatrixFree<dim, double> &mf,
+    LinearAlgebra::distributed::Vector<double> &dst,
+    const LinearAlgebra::distributed::Vector<double> &src,
+    const std::pair<unsigned int, unsigned int> &cell_range) const {
+    using VA = VectorizedArray<double>;
+
+    // Used only for the area calculation
+    FEEvaluation<dim, -1, 0, 1, double> phi_scalar(mf, 0, 1);
+
+    for (unsigned int species_index = 0; species_index < n_species;
+         species_index++) {
+        unsigned int first_component = species_index * (5);
+        FEEvaluation<dim, -1, 0, 5, double> phi(mf, 0, 1,
+                                                      first_component);
+        MatrixFreeOperators::CellwiseInverseMassMatrix<dim, -1, 5, double>
+            inverse(phi);
+
+        for (unsigned int cell = cell_range.first; cell < cell_range.second;
+             ++cell) {
+            phi_scalar.reinit(cell);
+            phi.reinit(cell);
+
+            phi.gather_evaluate(src, EvaluationFlags::values);
+            VA rho_min = VA(std::numeric_limits<double>::infinity());
+
+            for (const unsigned int q : phi_scalar.quadrature_point_indices()) {
+                phi_scalar.submit_value(VA(1.0), q);
+            }
+            auto area = phi_scalar.integrate_value();
+            for (const unsigned int q : phi.quadrature_point_indices()) {
+                auto v = phi.get_value(q);
+                rho_min = std::min(v[0], rho_min);
+                phi.submit_value(v, q);
+            }
+            auto cell_avg = phi.integrate_value() / area;
+
+            auto rho_bar = cell_avg[0];
+            auto p_bar = euler_pressure<dim>(cell_avg, gas_gamma);
+
+            for (unsigned int v = 0; v < VA::size(); ++v) {
+                if (rho_bar[v] <= 0.0) {
+                    AssertThrow(false,
+                                ExcMessage("Cell average density was negative"));
+                }
+                if (p_bar[v] <= 0.0) {
+                    AssertThrow(false,
+                                ExcMessage("Cell average pressure was negative"));
+                }
+            }
+
+            /*
+             * Theta_rho calculation
+             */
+            auto num_rho =
+                std::max(rho_bar - (1e-12 * std::max(rho_bar, VA(1.0))), VA(0.0));
+            auto denom_rho = rho_bar - rho_min;
+            for (unsigned int v = 0; v < VA::size(); ++v) {
+                denom_rho[v] = denom_rho[v] <= 0.0 ? 1.0 : denom_rho[v];
+            }
+            auto theta_rho = std::min(VA(1.0), num_rho / denom_rho);
+
+            /*
+             * Theta E calculation
+             *
+             * First we calculate the min energy after the theta_rho scaling
+             */
+            phi.gather_evaluate(src, EvaluationFlags::values);
+            VA p_min = VA(std::numeric_limits<double>::infinity());
+            for (const unsigned int q : phi.quadrature_point_indices()) {
+                auto v = phi.get_value(q);
+                v[0] = theta_rho * (v[0] - rho_bar) + rho_bar;
+                p_min = std::min(euler_pressure<dim>(v, gas_gamma), p_min);
+            }
+            auto num_E = p_bar - (1e-12 * std::max(p_bar, VA(1.0)));
+            auto denom_E = p_bar - p_min;
+            for (unsigned int v = 0; v < VA::size(); ++v) {
+                denom_E[v] = denom_E[v] <= 0.0 ? 1.0 : denom_E[v];
+            }
+            auto theta_E = std::min(VA(1.0), num_E / denom_E);
+
+            // Finally, scale the quadrature point values by theta_rho and theta_E.
+            phi.gather_evaluate(src, EvaluationFlags::values);
+            for (const unsigned int q : phi.quadrature_point_indices()) {
+                auto v = phi.get_value(q);
+                // std::cout << "v: " << v << std::endl;
+                auto rho = theta_rho * (v[0] - rho_bar) + rho_bar;
+                rho = theta_E * (rho - rho_bar) + rho_bar;
+                v[0] = rho;
+                for (unsigned int c = 1; c < 5; c++) {
+                    v[c] = theta_E * (v[c] - cell_avg[c]) + cell_avg[c];
+                }
+                auto pressure = euler_pressure<dim>(v, gas_gamma);
+                for (unsigned int vec_i = 0; vec_i < VA::size(); ++vec_i) {
+                    // AssertThrow(v[dim+2][vec_i] > 1e-12, ExcMessage("Submitting
+                    // negative density to quad point"));
+                    if (pressure[vec_i] <= 1e-12) {
+                        std::cout << "problem with: " << vec_i << std::endl;
+                        std::cout << "cell avg: " << cell_avg << std::endl;
+                        std::cout << "area: " << area << std::endl;
+                        std::cout << "p bar: " << p_bar << std::endl;
+                        std::cout << "p min: " << p_min << std::endl;
+                        std::cout << "theta rho: " << theta_rho << std::endl;
+                        std::cout << "theta rho: " << num_rho << std::endl;
+                        std::cout << "theta rho: " << denom_rho << std::endl;
+                        std::cout << "rho min: " << rho_min << std::endl;
+                        std::cout << "theta E: " << theta_E << std::endl;
+                        std::cout << "Submitting value: " << v << std::endl;
+                    }
+                    AssertThrow(
+                        rho[vec_i] > 1e-12,
+                        ExcMessage("Submitting negative density to quad point"));
+                    AssertThrow(
+                        pressure[vec_i] > 1e-12,
+                        ExcMessage("Submitting negative pressure to quad point"));
+                }
+                // std::cout << "v_submitted: " << v << std::endl;
+                //  This overwrites the value previously submitted.
+                //  See fe_evaluation.h:4995
+                phi.submit_value(v, q);
+            }
+            phi.integrate(EvaluationFlags::values);
+            inverse.apply(phi.begin_dof_values(), phi.begin_dof_values());
+            phi.set_dof_values(dst);
+        }
+    }
+}
+
+
+template <int dim>
 double FluidFluxESDGSEMOperator<dim>::recommend_dt(
     const MatrixFree<dim, double> &mf, const FiveMSolutionVec &sol) {
+    if (!check_if_solution_is_positive(discretization->get_matrix_free(), sol.mesh_sol)) {
+        std::cout << "sol is already negative pressure" << std::endl;
+    }
     double max_transport_speed = compute_cell_transport_speed(mf, sol.mesh_sol);
     unsigned int fe_degree = discretization->get_fe_degree();
     return 0.5 / (max_transport_speed * (fe_degree + 1) * (fe_degree + 1));

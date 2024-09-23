@@ -14,7 +14,11 @@ TEST(TimestepperTest, NoCallbacks) {
 }
 
 TEST(TimestepperTest, StopsAtCallbacks) {
-    auto step = [](double, double) -> bool { return true; };
+    double recorded_total_time = 0.0;
+    auto step = [&](double, double dt) -> bool { 
+        recorded_total_time += dt;
+        return true; 
+    };
     auto recommend_dt = []() -> double { return 0.024; };
 
     std::vector<double> writeout_times;
@@ -33,6 +37,8 @@ TEST(TimestepperTest, StopsAtCallbacks) {
     std::vector<TimestepCallback> callbacks = { writeout, diagnostic, print_profile };
 
     advance(step, 1.2, recommend_dt, callbacks);
+
+    ASSERT_NEAR(recorded_total_time, 1.2, 1e-14);
 
     // Expected writeouts: 0.0, 0.3, 0.6, 0.9, 1.2
     ASSERT_EQ(writeout_times.size(), 5);

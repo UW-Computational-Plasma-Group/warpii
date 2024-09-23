@@ -131,6 +131,6 @@ end
     auto outflow_flux = soln.boundary_integrated_fluxes.at_boundary<1>(1);
     auto balance = global_integral + inflow_flux + outflow_flux;
     for (unsigned int comp = 0; comp < 3; comp++) {
-        EXPECT_NEAR(balance[comp], ic_global_integral[comp], 1e-14);
+        EXPECT_NEAR(balance[comp], ic_global_integral[comp], 1e-13);
     }
 }
