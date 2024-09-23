@@ -35,12 +35,11 @@ namespace warpii {
             while (t < next_stop - 1e-12) {
                 bool succeeded = step(t, dt);
                 if (succeeded) {
+                    t += dt;
                     dt = fmin(recommend_dt(), next_stop - t);
                 } else {
                     dt *= 0.75;
                 }
-
-                t += dt;
             }
 
             if (perform_cb) {
