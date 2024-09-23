@@ -271,22 +271,37 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
                 val_bdy = evaluate_function<dim, 8>(*func.func, p);
                 val_p = 2.0*val_bdy - val_m;
             } else if (bc_type == MaxwellBCType::FLUX_INJECTION) {
-                // Copy out all components
-                val_p = val_m;
-                // Except for B
                 const auto p = fe_eval_m.quadrature_point(q);
                 const auto& func = fields->get_bc_map().get_flux_injection_func(boundary_id);
                 val_bdy = evaluate_function<dim, 8>(*func.func, p);
+                auto B_z = val_bdy[5];
+
+                auto c = constants.c;
+
+                auto Ey_in = val_m[1];
+                auto Bz_in = val_m[5];
+                //auto alpha_1 = Bz_in / 2.0 + Ey_in / (2.0*c);
+                auto alpha_2 = Bz_in / 2.0 - Ey_in / (2.0*c);
+                // Copy out the outgoing characteristic variable
+                auto beta_2 = alpha_2;
+                // Solve for the incoming characteristic variable that makes the total
+                // equal to the desired B_z
+                auto beta_1 = B_z - alpha_2;
+                auto Ey_out = beta_1 * c - beta_2 * c;
+
+                // Copy out all components
+                val_p = val_m;
+                // Except for B
                 val_p[0] = val_m[0];
                 // Set E_y = cB_z, according to the eigendecomposition.
                 // This corresponds to setting the right-going wave to a certain
                 // value, and the left-going wave to zero.
-                val_p[1] = constants.c * val_bdy[5];
+                val_p[1] = Ey_out;
                 // E_z = -cB_y, corresponding to the right-going wave.
-                val_p[2] = -constants.c * val_bdy[4];
+                val_p[2] = 0.0;
                 val_p[3] = val_bdy[3];
                 val_p[4] = val_bdy[4];
-                val_p[5] = val_bdy[5];
+                val_p[5] = B_z;
             }
 
             const auto numerical_flux = ph_maxwell_numerical_flux(val_m, val_p, n, constants);
