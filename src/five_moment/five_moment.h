@@ -81,7 +81,7 @@ class FiveMomentApp : public AbstractApp {
 
     FiveMSolutionVec &get_solution();
 
-    void output_results(const unsigned int result_number);
+    void output_results(const double t, const unsigned int result_number);
 
     void append_diagnostics(const double t, const bool with_header=false);
 
@@ -234,7 +234,7 @@ void FiveMomentApp<dim>::setup(WarpiiOpts) {
     }
     solver->reinit();
     solver->project_initial_condition();
-    output_results(0);
+    output_results(0.0, 0);
     append_diagnostics(0.0, true);
 }
 
@@ -242,7 +242,7 @@ template <int dim>
 void FiveMomentApp<dim>::run(WarpiiOpts) {
     double writeout_interval = t_end / n_writeout_frames;
     auto writeout = [&](double t) -> void {
-        output_results(static_cast<unsigned int>(std::round(t / writeout_interval)));
+        output_results(t, static_cast<unsigned int>(std::round(t / writeout_interval)));
     };
     // skip the zeroth writeout because we already did that in the setup phase
     TimestepCallback writeout_callback = TimestepCallback(writeout_interval, writeout, false);
@@ -257,7 +257,7 @@ void FiveMomentApp<dim>::run(WarpiiOpts) {
 }
 
 template <int dim>
-void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
+void FiveMomentApp<dim>::output_results(double time, const unsigned int result_number) {
     FiveMomentPostprocessor<dim> postprocessor(gas_gamma, species, fields_enabled);
     if (!write_output) {
         return;
@@ -266,6 +266,7 @@ void FiveMomentApp<dim>::output_results(const unsigned int result_number) {
     DataOut<dim> data_out;
 
     DataOutBase::VtkFlags flags;
+    flags.time = time;
     flags.write_higher_order_cells = false;
     flags.compression_level = DataOutBase::CompressionLevel::best_compression;
     data_out.set_flags(flags);
