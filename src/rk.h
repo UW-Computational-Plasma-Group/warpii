@@ -226,7 +226,6 @@ TimestepResult SSPRK2Integrator<SolutionVec, Operator>::evolve_one_time_step(
     const TimestepRequest request_1(dt_request.requested_dt, dt_request.is_flexible);
 
     // f_1 = soln + dt * f(soln)
-    std::cout << "Taking stage 1" << std::endl;
     const auto result_1 = forward_euler_operator.perform_forward_euler_step(
         f_1, solution_scratch, sol_registers, request_1, t);
     if (!result_1.successful) {
@@ -237,7 +236,6 @@ TimestepResult SSPRK2Integrator<SolutionVec, Operator>::evolve_one_time_step(
     const TimestepRequest request_2(result_1.achieved_dt, false);
 
     // soln = 0.5*soln + 0.5*f_1 + 0.5*dt*f(f_1)
-    std::cout << "Taking stage 2" << std::endl;
     const auto result_2 = forward_euler_operator.perform_forward_euler_step(
         solution_scratch, f_1, sol_registers, request_2, t + result_1.achieved_dt, 0.5, 0.5, 0.5);
     if (!result_2.successful) {

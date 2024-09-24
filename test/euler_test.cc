@@ -7,6 +7,26 @@
 
 using namespace warpii::five_moment;
 
+TEST(EulerTest, Pressure) {
+    double gamma = 5.0 / 3.0;
+    Tensor<1, 5, double> q({2.0, 1.0, 0.0, 0.0, 4.0});
+    double p = euler_pressure<1>(q, gamma);
+    EXPECT_NEAR(p, (4.0 - 0.25) * (2.0 / 3.0), 1e-12);
+
+    Tensor<1, 5, double> vacuum({0.0, 0.0, 0.0, 0.0, 0.0});
+    p = euler_pressure<1>(vacuum, gamma);
+    EXPECT_EQ(p, 0.0);
+}
+
+TEST(EulerTest, VacuumFluxTest) {
+    double gamma = 5.0 / 3.0;
+    Tensor<1, 5, double> vacuum({0.0, 0.0, 0.0, 0.0, 0.0});
+    Tensor<1, 1, double> n({1.0});
+    auto flux = euler_flux<1>(vacuum, gamma) * n;
+    auto expected = Tensor<1, 5, double>({0.0, 0.0, 0.0, 0.0, 0.0});
+    EXPECT_EQ(flux, expected);
+}
+
 TEST(EulerTest, EntropyVariablesSatisfyDerivativeIdentity) {
     double gamma = 1.4;
     Tensor<1, 5, double> q;
@@ -67,6 +87,13 @@ double ln_avg_reference_impl(double a, double b) {
     }
 }
 
+TEST(EulerFluxTests, EulerBetaTest) {
+    Tensor<1, 5, double> left({2.0, 0.0, 0.0, 0.0, 6.0});
+    double p = euler_pressure<1>(left, 5.0 / 3.0);
+    double beta = euler_beta<1>(left, p);
+    EXPECT_NEAR(beta, 0.25, 1e-12);
+}
+
 TEST(EulerFluxTests, LnAvgTest) {
     // Equal values
     EXPECT_EQ(ln_avg(0.4, 0.4), 0.4);
@@ -98,6 +125,31 @@ TEST(EulerFluxTests, EulerCHECTest) {
     EXPECT_NEAR(actual[0][0], 0.7213475204444817, 1e-15);
     EXPECT_NEAR(actual[1][0],  1.4713475204444817, 1e-15);
     EXPECT_NEAR(actual[4][0], 2.192695040888963, 1e-15);
+
+    // Vacuum state
+    const auto vacuum = Tensor<1, 5, double>({0, 0, 0, 0, 0});
+    actual = euler_CH_EC_flux<1>(vacuum, vacuum, gamma);
+    EXPECT_EQ(actual[0][0], 0.0);
+    EXPECT_EQ(actual[1][0], 0.0);
+    EXPECT_EQ(actual[2][0], 0.0);
+    EXPECT_EQ(actual[3][0], 0.0);
+    EXPECT_EQ(actual[4][0], 0.0);
+
+    // Vacuum on one side
+    actual = euler_CH_EC_flux<1>(left, vacuum, gamma);
+    EXPECT_GT(actual[0][0], 0.0);
+    EXPECT_GT(actual[1][0], 0.0);
+    EXPECT_EQ(actual[2][0], 0.0);
+    EXPECT_EQ(actual[3][0], 0.0);
+    EXPECT_GT(actual[4][0], 0.0);
+
+    // Vacuum on one side, flux is to the left
+    actual = euler_CH_EC_flux<1>(vacuum, right, gamma);
+    EXPECT_GT(actual[0][0], 0.0);
+    EXPECT_GT(actual[1][0], 0.0);
+    EXPECT_EQ(actual[2][0], 0.0);
+    EXPECT_EQ(actual[3][0], 0.0);
+    EXPECT_GT(actual[4][0], 0.0);
 }
 
 TEST(EulerFluxTests, EulerCHESTest) {
@@ -113,6 +165,31 @@ TEST(EulerFluxTests, EulerCHESTest) {
     EXPECT_NEAR(actual[0], 0.6495190528383291, 1e-15);
     EXPECT_NEAR(actual[1], 0.5 + 1.0 / 9, 1e-15);
     EXPECT_NEAR(actual[4],  0.9381717944489488, 1e-15);
+
+    // Vacuum state
+    const auto vacuum = Tensor<1, 5, double>({0, 0, 0, 0, 0});
+    actual = euler_CH_entropy_dissipating_flux<1>(vacuum, vacuum, normal, gamma);
+    EXPECT_EQ(actual[0], 0.0);
+    EXPECT_EQ(actual[1], 0.0);
+    EXPECT_EQ(actual[2], 0.0);
+    EXPECT_EQ(actual[3], 0.0);
+    EXPECT_EQ(actual[4], 0.0);
+
+    // Vacuum on one side
+    actual = euler_CH_entropy_dissipating_flux<1>(left, vacuum, normal, gamma);
+    EXPECT_GT(actual[0], 0.0);
+    EXPECT_GT(actual[1], 0.0);
+    EXPECT_EQ(actual[2], 0.0);
+    EXPECT_EQ(actual[3], 0.0);
+    EXPECT_GT(actual[4], 0.0);
+
+    // Vacuum on one side, flux is to the left
+    actual = euler_CH_entropy_dissipating_flux<1>(vacuum, right, -normal, gamma);
+    EXPECT_LT(actual[0], 0.0);
+    EXPECT_LT(actual[1], 0.0);
+    EXPECT_EQ(actual[2], 0.0);
+    EXPECT_EQ(actual[3], 0.0);
+    EXPECT_LT(actual[4], 0.0);
 }
 
 void test_entropy_conservation_1d(
