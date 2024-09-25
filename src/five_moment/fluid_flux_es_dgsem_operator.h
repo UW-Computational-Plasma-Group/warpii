@@ -344,7 +344,9 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_cell(
             }
 
             split_form_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
-            subcell_finite_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
+            if (alpha.sum() > 0.0) {
+                subcell_finite_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
+            }
         }
     }
 }
