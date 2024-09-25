@@ -33,19 +33,6 @@ namespace five_moment {
 using namespace dealii;
 
 template <int dim>
-struct ScratchData {
-    ScratchData(
-        const std::shared_ptr<NodalDGDiscretization<dim>> discretization)
-        : fe_values(discretization->get_mapping(), discretization->get_fe(),
-                    QGaussLobatto<dim>(), UpdateFlags::update_values) {}
-
-    FEValues<dim> fe_values;
-    std::vector<std::vector<double>> u_values;
-};
-
-struct CopyData {};
-
-template <int dim>
 class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
    public:
     FluidFluxESDGSEMOperator(
@@ -313,10 +300,8 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_cell(
     const std::pair<unsigned int, unsigned int> &cell_range) {
     unsigned int fe_degree = discretization->get_fe_degree();
     unsigned int Np = fe_degree + 1;
-    FEValues<dim> fe_values(discretization->get_mapping(),
-                            discretization->get_fe(), QGaussLobatto<dim>(Np),
-                            UpdateFlags::update_values);
 
+    const auto& fe_values = discretization->get_fe_values();
     const std::vector<double> &quadrature_weights =
         fe_values.get_quadrature().get_weights();
 
@@ -359,7 +344,9 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_cell(
             }
 
             split_form_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
-            subcell_finite_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
+            if (alpha.sum() > 0.0) {
+                subcell_finite_volume_flux.calculate_flux(dst, phi, phi_reader, alpha, false);
+            }
         }
     }
 }

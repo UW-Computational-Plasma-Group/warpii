@@ -59,6 +59,9 @@ class NodalDGDiscretization {
     FESystem<dim>& get_fe() {
         return fe;
     }
+    const FEValues<dim>& get_fe_values() {
+        return fe_values;
+    }
     MatrixFree<dim>& get_matrix_free() {
         return mf;
     }
