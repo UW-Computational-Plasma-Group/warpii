@@ -33,6 +33,7 @@ namespace warpii {
             // step over by a whole dt, or take a "stutter step" of 1e-13.
             dt = fmin(recommend_dt(), next_stop - t);
             while (t < next_stop - 1e-12) {
+                std::cout << "dt = " << dt << std::endl;
                 bool succeeded = step(t, dt);
                 if (succeeded) {
                     t += dt;

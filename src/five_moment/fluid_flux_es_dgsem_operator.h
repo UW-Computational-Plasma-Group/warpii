@@ -601,8 +601,11 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_positivity_limiter(
             auto rho_bar = cell_avg[0];
             auto p_bar = euler_pressure<dim>(cell_avg, gas_gamma);
 
+            //std::cout << "cell avg = " << cell_avg << std::endl;
+            //std::cout << "p_bar = " << p_bar << std::endl;
+
             for (unsigned int v = 0; v < VA::size(); ++v) {
-                if (rho_bar[v] <= 0.0) {
+                if (rho_bar[v] < 0.0) {
                     AssertThrow(false,
                                 ExcMessage("Cell average density was negative"));
                 }
@@ -670,14 +673,16 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_positivity_limiter(
                         std::cout << "theta E: " << theta_E << std::endl;
                         std::cout << "Submitting value: " << v << std::endl;
                     }
+                    /*
                     AssertThrow(
                         rho[vec_i] > 1e-12,
                         ExcMessage("Submitting negative density to quad point"));
                     AssertThrow(
                         pressure[vec_i] > 1e-12,
                         ExcMessage("Submitting negative pressure to quad point"));
+                        */
                 }
-                // std::cout << "v_submitted: " << v << std::endl;
+                //std::cout << "v_submitted: " << v << std::endl;
                 //  This overwrites the value previously submitted.
                 //  See fe_evaluation.h:4995
                 phi.submit_value(v, q);
@@ -685,6 +690,17 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_positivity_limiter(
             phi.integrate(EvaluationFlags::values);
             inverse.apply(phi.begin_dof_values(), phi.begin_dof_values());
             phi.set_dof_values(dst);
+
+            for (unsigned int dof = 0; dof < phi.dofs_per_component; dof++) {
+                const auto val = phi.get_dof_value(dof);
+                const auto p = euler_pressure<1>(val, gas_gamma);
+                for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
+                    if (p[lane] <= 1e-12) {
+                        std::cout << "Found negative pressure!" << std::endl;
+                        std::cout << "val = " << val << std::endl;
+                    }
+                }
+            }
         }
     }
 }
@@ -733,7 +749,7 @@ double FluidFluxESDGSEMOperator<dim>::compute_cell_transport_speed(
                                                 std::abs(convective_speed[d]));
 
                 const auto speed_of_sound =
-                    std::sqrt(gas_gamma * pressure * (1. / solution[0]));
+                    std::sqrt(gas_gamma * pressure * (1. / floor(solution[0])));
 
                 Tensor<1, dim, VA> eigenvector;
                 for (unsigned int d = 0; d < dim; ++d) eigenvector[d] = 1.;
@@ -781,13 +797,21 @@ bool FluidFluxESDGSEMOperator<dim>::check_if_solution_is_positive(
         for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
             phi.reinit(cell);
             phi.gather_evaluate(sol, EvaluationFlags::values);
+            Tensor<1, 5, VectorizedArray<double>> cell_avg;
+            VectorizedArray<double> area(0.);
             for (const unsigned int q : phi.quadrature_point_indices()) {
                 const auto solution = phi.get_value(q);
-                const auto pressure = euler_pressure<dim>(solution, gas_gamma);
-                for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
-                    if (solution[0][lane] < 1e-12 || pressure[lane] < 1e-12) {
-                        return false;
-                    }
+                cell_avg += solution * phi.JxW(q);
+                area += phi.JxW(q);
+            }
+            cell_avg = cell_avg / area;
+            const auto pressure = euler_pressure<dim>(cell_avg, gas_gamma);
+            for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
+                if (cell_avg[0][lane] < 0.0 || pressure[lane] < 1e-13) {
+                    std::cout << "cell = " << cell << std::endl;
+                    std::cout << "cell_avg = " << cell_avg << std::endl;
+                    std::cout << "pressure = " << pressure << std::endl;
+                    return false;
                 }
             }
         }

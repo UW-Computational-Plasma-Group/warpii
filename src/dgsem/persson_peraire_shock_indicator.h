@@ -107,8 +107,17 @@ double PerssonPeraireShockIndicator<dim>::compute_shock_indicator(
             total_energy += energy;
         }
     }
-    double E = std::max(top_mode / total_energy,
-                        top_mode_minus_1 / total_energy_minus_1);
+    double E;
+    if (total_energy == 0.0 && total_energy_minus_1 == 0.0) {
+        E = 0.0;
+    } else if (total_energy == 0.0) {
+        E = top_mode_minus_1 / total_energy_minus_1;
+    } else if (total_energy_minus_1 == 0.0) {
+        E = top_mode / total_energy;
+    } else {
+        E = std::max(top_mode / total_energy,
+                            top_mode_minus_1 / total_energy_minus_1);
+    }
     double T = 0.5 * std::pow(10.0, -1.8 * std::pow(Np, 0.25));
     double s = 9.21024;
     double alpha = 1.0 / (1.0 + std::exp(-s / T * (E - T)));

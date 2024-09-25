@@ -1,4 +1,5 @@
 #include "five_moment/species_func.h"
+#include "five_moment/euler.h"
 #include <deal.II/base/parameter_handler.h>
 #include <variant>
 
@@ -11,11 +12,17 @@ template <int dim>
 double SpeciesFunc<dim>::value(const Point<dim> &pt,
                                const unsigned int component) const {
     if (variables_type == CONSERVED) {
-        return func->value(pt, component);
+        if (component == 0) {
+            return std::max(func->value(pt, component), VACUUM_EULER_DENSITY);
+        } else if (component == 4) {
+            return std::max(func->value(pt, component), VACUUM_EULER_ENERGY);
+        } else {
+            return func->value(pt, component);
+        }
     } else {
         double rho = func->value(pt, 0);
         if (component == 0) {
-            return rho;
+            return std::max(rho, VACUUM_EULER_DENSITY);
         } else if (component <= 3) {
             return rho * func->value(pt, component);
         } else {
@@ -25,7 +32,7 @@ double SpeciesFunc<dim>::value(const Point<dim> &pt,
                 kinetic_energy += 0.5 * rho * u_d * u_d;
             }
             double p = func->value(pt, 4);
-            return kinetic_energy + p / (gas_gamma - 1);
+            return kinetic_energy + std::max(p / (gas_gamma - 1), VACUUM_EULER_ENERGY);
         }
     }
 }

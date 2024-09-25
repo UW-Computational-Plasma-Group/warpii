@@ -41,7 +41,8 @@ class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec>
 
     double recommend_dt(const MatrixFree<dim>& mf, const FiveMSolutionVec& soln);
 
-    private:
+    //private:
+
     bool fields_enabled;
         FluidFluxESDGSEMOperator<dim> fluid_flux;
         FiveMomentExplicitSourceOperator<dim> explicit_sources;

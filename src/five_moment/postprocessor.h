@@ -5,6 +5,7 @@
 #include <deal.II/numerics/data_out.h>
 
 #include <cmath>
+#include <limits>
 
 namespace warpii {
 namespace five_moment {
@@ -63,9 +64,13 @@ void FiveMomentPostprocessor<dim>::evaluate_vector_field(
                 computed_quantities[p](d + 6*i) = velocity[d];
             }
             computed_quantities[p](3 + 6*i) = pressure;
-            computed_quantities[p](4 + 6*i) =
-                std::log(pressure) - gamma * std::log(density);
-            computed_quantities[p](5 + 6*i) = std::sqrt(gamma * pressure / density);
+            if (pressure > 0.0) {
+                computed_quantities[p](4 + 6*i) =
+                    std::log(floor(pressure)) - gamma * std::log(floor(density));
+            } else {
+                computed_quantities[p](4 + 6*i) = -std::numeric_limits<double>::infinity();
+            }
+            computed_quantities[p](5 + 6*i) = std::sqrt(gamma * floor(pressure) / floor(density));
         }
     }
 }

@@ -9,6 +9,23 @@ namespace warpii {
 namespace five_moment {
 using namespace dealii;
 
+// Quantities to use when performing various calculations that
+// will fail if density or pressure are zero, as they are in a
+// vacuum state.
+const double VACUUM_EULER_DENSITY = 1e-20;
+const double VACUUM_EULER_PRESSURE = 1e-20;
+const double VACUUM_EULER_ENERGY = 1e-20;
+
+template <typename Number>
+inline DEAL_II_ALWAYS_INLINE Number floor(Number rho_or_p) {
+    return std::max(rho_or_p, Number(VACUUM_EULER_DENSITY));
+}
+template <typename Number>
+inline DEAL_II_ALWAYS_INLINE Number floor_p(Number p) {
+    return std::max(p, Number(VACUUM_EULER_PRESSURE));
+}
+
+
 /**
  * Compute the velocity from the conserved variables.
  * Returns the first `dim` components of the velocity.
@@ -16,7 +33,7 @@ using namespace dealii;
 template <int dim, typename Number>
 inline DEAL_II_ALWAYS_INLINE Tensor<1, dim, Number> euler_velocity(
     const Tensor<1, 5, Number> &conserved_variables) {
-    const Number inverse_density = Number(1.) / conserved_variables[0];
+    const Number inverse_density = Number(1.) / floor(conserved_variables[0]);
 
     Tensor<1, dim, Number> velocity;
     for (unsigned int d = 0; d < dim; d++) {
@@ -34,14 +51,15 @@ inline DEAL_II_ALWAYS_INLINE Tensor<1, dim, Number> euler_velocity(
 template <int dim, typename Number>
 inline DEAL_II_ALWAYS_INLINE Number euler_pressure(
     const Tensor<1, 5, Number> &conserved_variables, double gamma) {
-    const Number rho = conserved_variables[0];
+    const Number rho = floor(conserved_variables[0]);
+    const Number total_energy = conserved_variables[4];
+
     Number squared_momentum = Number(0.);
     for (unsigned int d = 0; d < 3; d++) {
         Number p_d = conserved_variables[d + 1];
         squared_momentum += p_d * p_d;
     }
     const Number kinetic_energy = squared_momentum / (2. * rho);
-    const Number total_energy = conserved_variables[4];
     return (gamma - 1) * (total_energy - kinetic_energy);
 }
 
@@ -126,12 +144,16 @@ inline DEAL_II_ALWAYS_INLINE Number ln_avg(Number a, Number b) {
     return lhs / denom;
 }
 
+/** 
+ * A measure of inverse temperature.
+ * Equal to one for the vacuum state.
+ */
 template <int dim, typename Number>
 inline DEAL_II_ALWAYS_INLINE Number euler_beta(
         const Tensor<1, 5, Number> q, 
         const Number p) {
-    const Number rho = q[0];
-    return rho / (2.0 * p);
+    const Number rho = floor(q[0]);
+    return rho / (2.0 * floor(p));
 }
 
 /**
@@ -140,7 +162,9 @@ inline DEAL_II_ALWAYS_INLINE Number euler_beta(
 template <int dim, typename Number>
 Number euler_thermodynamic_specific_entropy(
         const Tensor<1, 5, Number> q, double gamma) {
-    return std::log(euler_pressure<dim>(q, gamma)) - gamma * std::log(q[0]);
+    const Number p = floor(euler_pressure<dim>(q, gamma));
+    const Number rho = floor(q[0]);
+    return std::log(p) - gamma * std::log(rho);
 }
 
 template <int dim, typename Number>
@@ -202,7 +226,7 @@ inline DEAL_II_ALWAYS_INLINE Tensor<1, 5, Tensor<1, dim, Number>> euler_CH_EC_fl
     const auto u_j = euler_velocity<3>(q_j);
     const Number rho_l = q_l[0];
     const auto u_l = euler_velocity<3>(q_l);
-    const Number rho_ln = ln_avg(rho_j, rho_l);
+    const Number rho_ln = ln_avg(floor(rho_j), floor(rho_l));
 
     const Number rho_avg = 0.5 * (rho_j + rho_l);
     const Tensor<1, 3, Number> u_avg = 0.5 * (u_j + u_l);
@@ -262,8 +286,8 @@ inline DEAL_II_ALWAYS_INLINE Tensor<1, 5, Number> euler_CH_entropy_dissipating_f
     const Tensor<1, 3, Number> u_jump = u_l - u_j;
 
     // Speeds of sound and local wavespeeds
-    const Number c_j = std::sqrt(gamma * p_j / rho_j);
-    const Number c_l = std::sqrt(gamma * p_l / rho_l);
+    const Number c_j = std::sqrt(gamma * p_j / floor(rho_j));
+    const Number c_l = std::sqrt(gamma * p_l / floor(rho_l));
     const Number u2_j_norm = std::sqrt(sum(u2_j));
     const Number u2_l_norm = std::sqrt(sum(u2_l));
     const Number lambda_max = std::max(u2_j_norm + c_j, u2_l_norm + c_l);
@@ -358,8 +382,8 @@ Tensor<1, 5, Number> euler_roe_flux(
 
     const auto u_in = euler_velocity<3>(qR_in);
     const auto u_out = euler_velocity<3>(qR_out);
-    const auto rho_in = qR_in[0];
-    const auto rho_out = qR_out[0];
+    const auto rho_in = floor(qR_in[0]);
+    const auto rho_out = floor(qR_out[0]);
 
     const auto rho_denom = std::sqrt(rho_in) + std::sqrt(rho_out);
     if (log) {
@@ -384,7 +408,7 @@ Tensor<1, 5, Number> euler_roe_flux(
 
     const auto q2 = (U_hat * U_hat + V_hat * V_hat + W_hat * W_hat);
     const auto a_squared = (gamma - 1) * (H_hat - 0.5 * q2);
-    const auto a = std::sqrt(a_squared);
+    const auto a = std::sqrt(floor(a_squared));
 
     if (log) {
         SHOW(a);
@@ -394,7 +418,7 @@ Tensor<1, 5, Number> euler_roe_flux(
 
     // We're computing the eigendecomposition of the jump:
     // Equation (22a)
-    const Number a4 = (gamma - 1.0) / a_squared * ((H_hat - q2) * jump[0] + U_hat * jump[1] + V_hat * jump[2] + W_hat * jump[3] - jump[4]);
+    const Number a4 = (gamma - 1.0) / floor(a_squared) * ((H_hat - q2) * jump[0] + U_hat * jump[1] + V_hat * jump[2] + W_hat * jump[3] - jump[4]);
     // (22b)
     const Number wa3 = jump[3] - W_hat * jump[1];
     // (22c)
