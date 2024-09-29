@@ -11,10 +11,9 @@ subsection geometry
     set nx = 20,20
 end
 
-subsection Species_1
+subsection Species_0
     subsection InitialCondition
-        set Function constants = pi=3.1415926535
-        set Function expression = 1 + 0.6 * sin(2*pi*(x+y)); \
+        set components = 1 + 0.6 * sin(2*pi*(x+y)); \
                                   1 + 0.6 * sin(2*pi*(x+y)); \
                                   1 + 0.6 * sin(2*pi*(x+y)); \
                                   0; \

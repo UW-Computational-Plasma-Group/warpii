@@ -60,3 +60,27 @@ add_test(
 set_tests_properties(Pragmas PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_subdirectory(doctests)
+
+set(EXAMPLE_PAIRS
+    "five-moment/freestream_1d.inp 0.01"
+    "five-moment/freestream_2d_diagonal.inp 0.01"
+    "five-moment/langmuir_sheath.inp 0.01"
+    "five-moment/langmuir_wave.inp 0.01"
+    "five-moment/shu_osher_shock_1d.inp 0.01"
+    "five-moment/snowplow.inp 0.001"
+    "five-moment/sod_shocktube.inp 0.01"
+    "five-moment/source_outflow.inp 0.01"
+    "phmaxwell/lightprop_periodic_1d.inp 0.01"
+    )
+
+foreach(PAIR ${EXAMPLE_PAIRS})
+    string(REPLACE ";" " " PAIR_SPACED "${PAIR}")
+    separate_arguments(PAIR_SPLIT UNIX_COMMAND "${PAIR_SPACED}")
+    list(GET PAIR_SPLIT 0 EXAMPLE)
+    list(GET PAIR_SPLIT 1 T_END)
+    add_test(
+        NAME Example__${EXAMPLE}
+        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run-example-as-regression-test.sh" "${CMAKE_BINARY_DIR}/warpii" "${CMAKE_SOURCE_DIR}/examples/${EXAMPLE}" "${T_END}"
+        )
+endforeach()
+
