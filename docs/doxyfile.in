@@ -1,10 +1,7 @@
 PROJECT_NAME = WarpII
 PROJECT_NUMBER = v0.1
 
-INPUT = README.md \
-        @PROJECT_SOURCE_DIR@/docs \
-        @PROJECT_SOURCE_DIR@/src
-
+INPUT = 
 RECURSIVE = YES
 
 STRIP_FROM_PATH        = @PROJECT_SOURCE_DIR@ \
@@ -28,7 +25,7 @@ LAYOUT_FILE            = doxylayout.xml
 
 IMAGE_PATH = docs/images
 
-HTML_EXTRA_STYLESHEET = docs/style.css docs/autogen_params_style.css
+HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/docs/style.css @CMAKE_SOURCE_DIR@/docs/autogen_params_style.css
 HTML_COLORSTYLE        = LIGHT
 
 SEARCHENGINE = YES

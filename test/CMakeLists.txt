@@ -33,6 +33,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE}
         euler_test_helpers.cc)
     target_link_libraries(${TEST_NAME} GTest::gtest_main libwarpii)
+    target_link_libraries(${TEST_NAME} ${MPI_CXX_LIBRARIES})
     target_include_directories(${TEST_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
     deal_ii_setup_target(${TEST_NAME})
     gtest_discover_tests(${TEST_NAME})

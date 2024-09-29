@@ -46,6 +46,7 @@ add_subdirectory(src)
 
 add_executable(warpii main.cc)
 target_link_libraries(warpii libwarpii)
+target_link_libraries(warpii ${MPI_CXX_LIBRARIES})
 deal_ii_setup_target(warpii)
 
 enable_testing()

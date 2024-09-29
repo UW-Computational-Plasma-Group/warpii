@@ -66,7 +66,7 @@ build: check-env src codes builds/$(WARPII_CMAKE_PRESET)/CMakeFiles
 install:
 	source warpii.env && cmake --install builds/$(WARPII_CMAKE_PRESET)
 
-test: check-env build doc
+test: check-env build
 	cd builds/$(WARPII_CMAKE_PRESET) \
 		&& ctest --output-on-failure $(if $(WARPII_TEST_FILTER),-R $(WARPII_TEST_FILTER))
 
@@ -74,7 +74,7 @@ test: check-env build doc
 install-dealii: $(WARPIISOFT)
 	cd script && $(MAKE) $(WARPIISOFT)/deps/dealii
 
-doc: check-env build
+doc: check-env
 	cmake --build --preset $(WARPII_CMAKE_PRESET) --target documentation
 
 .PHONY: clean check-env required-vars-set warn-env-vars

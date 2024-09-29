@@ -1,40 +1,60 @@
 find_package(Doxygen)
 
+
+#
+# Set up the doxygen target
+#
+
+set(_doxygen_input ${CMAKE_SOURCE_DIR}/README.md)
+list(APPEND _doxygen_input
+    ${CMAKE_SOURCE_DIR}/include/
+    ${CMAKE_SOURCE_DIR}/src/
+    ${CMAKE_SOURCE_DIR}/docs/)
+
+file(GLOB _doxygen_depend
+    ${CMAKE_SOURCE_DIR}/include/**/*.h
+    ${CMAKE_SOURCE_DIR}/src/**/*.h
+    ${CMAKE_SOURCE_DIR}/src/**/*.cc
+    )
+
 set(doxyfile "${CMAKE_CURRENT_BINARY_DIR}/doxyfile")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile.in"
-    ${doxyfile} @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile.in" ${doxyfile} @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/docs/doxylayout.in.xml"
     "${CMAKE_CURRENT_BINARY_DIR}/doxylayout.xml" COPYONLY)
 
-set(docs_src_dir "${CMAKE_CURRENT_SOURCE_DIR}/docs")
-set(docs_dest_dir "${CMAKE_CURRENT_BINARY_DIR}/docs")
-
-add_custom_target(copy-readme
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/README.md" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
-    COMMENT "Copying README.md to build tree")
-
-add_custom_target(copy-docs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${docs_src_dir} ${docs_dest_dir}
-    COMMENT "Copying docs/ directory to build tree")
+string(REPLACE ";" " " _doxygen_input_string "${_doxygen_input}")
+file(APPEND "${doxyfile}"
+  "
+INPUT=${_doxygen_input_string}
+  "
+  )
 
 add_custom_target(doxygen
-    COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-    DEPENDS ${DOXYGEN_EXECUTABLE} ${doxyfile} ${docs_src_dir}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile} 
+    > ${CMAKE_BINARY_DIR}/doxygen.log 2>&1 # doxygen be quiet
+    COMMAND ${CMAKE_COMMAND} -E echo "-- Documentation is available at ${CMAKE_CURRENT_BINARY_DIR}/html/index.html"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${DOXYGEN_EXECUTABLE} ${doxyfile} ${_doxygen_depend}
     COMMENT "Generating documentation with Doxygen"
     VERBATIM)
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/param_doc_pages
-    COMMAND ${docs_dest_dir}/scripts/build_params_doc_pages.sh
-    DEPENDS ${DOXYGEN_EXECUTABLE} ${doxyfile} ${docs_src_dir} ${docs_src_dir}/scripts/build_params_doc_pages.sh doxygen
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating param doc pages"
-    VERBATIM)
+#
+# Commands to build params html pages
+#
 
-add_custom_target(documentation
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/param_doc_pages)
+set(app_params_pages "")
+set(params_doc_script "${CMAKE_SOURCE_DIR}/docs/scripts/build_params_doc_pages.sh")
+foreach(app five_moment)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/html/${app}_params_copy.html
+        COMMAND ${params_doc_script} ${app} ${CMAKE_SOURCE_DIR}
+        DEPENDS warpii doxygen ${params_doc_script}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating param doc pages for ${app}"
+        VERBATIM)
+    list(APPEND app_params_pages "${CMAKE_CURRENT_BINARY_DIR}/html/${app}_params_copy.html")
+endforeach()
 
-add_dependencies(documentation copy-docs copy-readme doxygen)
+add_custom_target(documentation DEPENDS doxygen ${app_params_pages})
 
 add_test(
     NAME DoxygenTest
