@@ -17,13 +17,8 @@ end
 
 subsection PHMaxwellFields
     subsection InitialCondition
-        subsection E field
-            set Function constants = pi=3.1415926535
-            set Function expression = 0.0; sin(2*pi*x); 0.0
-        end
-        subsection B field
-            set Function constants = pi=3.1415926535
-            set Function expression = 0.0; 0.0; 2*sin(2*pi*x)
-        end
+        set components = 0; sin(2*pi*x); 0; \
+                         0; 0; 2*sin(2*pi*x); \
+                         0; 0
     end
 end
