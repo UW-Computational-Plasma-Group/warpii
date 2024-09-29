@@ -2,7 +2,7 @@ add_executable(dummy_extension dummy_extension_main.cc)
 deal_ii_setup_target(dummy_extension)
 
 target_link_libraries(dummy_extension libwarpii)
-message("${CMAKE_SOURCE_DIR}")
+target_link_libraries(dummy_extension ${MPI_CXX_LIBRARIES})
 target_include_directories(dummy_extension PRIVATE "${CMAKE_SOURCE_DIR}")
 
 get_target_property(EXT_LINK_LIBRARIES dummy_extension LINK_LIBRARIES)
