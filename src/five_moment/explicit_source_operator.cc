@@ -1,6 +1,8 @@
 #include "explicit_source_operator.h"
+#include <deal.II/base/tensor.h>
 #include <deal.II/matrix_free/evaluation_flags.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
+#include <limits>
 #include "function_eval.h"
 #include "explicit_operator.h"
 #include "five_moment/cell_evaluators.h"
@@ -109,6 +111,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
     const std::pair<unsigned int, unsigned int> &cell_range) {
 
     FiveMomentCellEvaluators<dim> evaluators(mf, src, species.size(), fields_enabled);
+    FiveMomentCellEvaluators<dim> writers(mf, src, species.size(), fields_enabled);
 
     std::vector<bool> nonzero_fluid_general_source_term;
     for (unsigned int i = 0; i < species.size(); i++) {
@@ -122,6 +125,7 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
         for (unsigned int i = 0; i < species.size(); i++) {
             // We need to have species value evaluations for rho_c.
             evaluators.ensure_species_evaluated(i, cell, EvaluationFlags::values);
+            writers.ensure_species_evaluated(i, cell, EvaluationFlags::values);
             if (species.at(i)->has_extension_source_term) {
                 call_extension_prepare = true;
             }
@@ -135,24 +139,46 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
 
         for (unsigned int q : evaluators.species_eval(0).quadrature_point_indices()) {
             auto rho_c = VectorizedArray<double>(0.0);
+            auto j = Tensor<1, 3, VectorizedArray<double>>({0.0, 0.0, 0.0});
+
+            Tensor<1, 8, VectorizedArray<double>> field_vals({0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+            if (fields_enabled) {
+                field_vals = evaluators.field_eval()->get_value(q);
+            }
+            const auto E = Tensor<1, 3, VectorizedArray<double>>({field_vals[0], field_vals[1], field_vals[2]});
+            const auto B = Tensor<1, 3, VectorizedArray<double>>({field_vals[3], field_vals[4], field_vals[5]});
 
             for (unsigned int i = 0; i < species.size(); i++) {
                 auto& phi = evaluators.species_eval(i);
+                double Z = species[i]->charge;
+                double A = species[i]->mass;
 
                 if (fields_enabled) {
-                    double Zi = species[i]->charge;
-                    double Ai = species[i]->mass;
-                    rho_c += phi.get_value(q)[0] * Zi / Ai;
+                    rho_c += phi.get_value(q)[0] * Z / A;
+                    j[0] += phi.get_value(q)[1] * Z / A;
+                    j[1] += phi.get_value(q)[2] * Z / A;
+                    j[2] += phi.get_value(q)[3] * Z / A;
                 }
 
+                Tensor<1, 5, VectorizedArray<double>> source_val;
                 if (species.at(i)->has_extension_source_term) {
-                    const auto source_val = extension->source_term(q, i, evaluators);
-                    phi.submit_value(source_val, q);
+                    source_val += extension->source_term(q, i, evaluators);
                 } else if (nonzero_fluid_general_source_term[i]) {
                     const auto p = phi.quadrature_point(q);
-                    const auto source_val = evaluate_function<dim, 5>(*species[i]->general_source_term, p);
-                    phi.submit_value(source_val, q);
+                    source_val += evaluate_function<dim, 5>(*species[i]->general_source_term, p);
                 }
+
+                if (fields_enabled && explicit_fluid_field_coupling) {
+                    const auto n = phi.get_value(q)[0] / A;
+                    const auto u = euler_velocity<3>(phi.get_value(q));
+                    const auto momentum_source = plasma_norm.omega_c_tau * Z * n * (E + cross_product_3d(u, B));
+                    const auto energy_source = plasma_norm.omega_c_tau * Z * n * (E * u);
+                    for (unsigned int d = 0; d < 3; d++) {
+                        source_val[d+1] += momentum_source[d];
+                    }
+                    source_val[4] += energy_source;
+                }
+                writers.species_eval(i).submit_value(source_val, q);
             }
 
             if (fields_enabled) {
@@ -162,6 +188,12 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
                     const auto p = evaluators.field_eval()->quadrature_point(q);
                     field_source += evaluate_function<dim, 8>(*(fields->get_general_source_term().func), p);
                 }
+                if (explicit_fluid_field_coupling) {
+                    const auto fac = plasma_norm.omega_p_tau * plasma_norm.omega_p_tau / plasma_norm.omega_c_tau;
+                    for (unsigned int d = 0; d < 3; d++) {
+                        field_source[d] -= fac * j[d];
+                    }
+                }
                 const double chi = fields->phmaxwell_constants().chi;
                 field_source[6] += chi * plasma_norm.omega_p_tau * rho_c;
                 evaluators.field_eval()->submit_value(field_source, q);
@@ -169,8 +201,9 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
         }
 
         for (unsigned int i = 0; i < species.size(); i++) {
-            if (species.at(i)->has_extension_source_term || nonzero_fluid_general_source_term[i]) {
-                auto& phi = evaluators.species_eval(i);
+            if (species.at(i)->has_extension_source_term || nonzero_fluid_general_source_term[i]
+                    || explicit_fluid_field_coupling) {
+                auto& phi = writers.species_eval(i);
                 phi.integrate_scatter(EvaluationFlags::values, dst);
             }
         }
@@ -178,6 +211,57 @@ void FiveMomentExplicitSourceOperator<dim>::local_apply_cell(
             evaluators.field_eval()->integrate_scatter(EvaluationFlags::values, dst);
         }
     }
+}
+
+template <int dim>
+double FiveMomentExplicitSourceOperator<dim>::recommend_dt(const MatrixFree<dim> &mf, const FiveMSolutionVec &soln) {
+    if (!explicit_fluid_field_coupling) {
+        return std::numeric_limits<double>::infinity();
+    }
+
+    VectorizedArray<double> max_freq = 0.0;
+    FEEvaluation<dim, -1, 0, 8, Number> fields(mf, 0, 1, 5*species.size());
+    for (unsigned int species_index = 0; species_index < species.size(); species_index++) {
+        unsigned int first_component = species_index * (5);
+
+        FEEvaluation<dim, -1, 0, 5, Number> phi(mf, 0, 1,
+                                                      first_component);
+
+        for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
+            phi.reinit(cell);
+            phi.gather_evaluate(soln.mesh_sol, EvaluationFlags::values);
+            fields.reinit(cell);
+            fields.gather_evaluate(soln.mesh_sol, EvaluationFlags::values);
+            for (const unsigned int q : phi.quadrature_point_indices()) {
+                const auto solution = phi.get_value(q);
+                const auto A = species[species_index]->mass;
+                const auto Z = species[species_index]->charge;
+                const auto n = solution[0] / A;
+
+                const auto field_vals = fields.get_value(q);
+                const auto B = Tensor<1, 3, VectorizedArray<double>>({
+                        field_vals[3], field_vals[4], field_vals[5]});
+                const auto B_norm = B.norm();
+
+                const auto proton_plasma_freq = plasma_norm.omega_p_tau;
+                const auto species_plasma_freq = proton_plasma_freq * std::abs(Z) * std::sqrt(n / A);
+
+                const auto proton_cyclotron_freq = plasma_norm.omega_c_tau;
+                const auto species_cyclotron_freq = proton_cyclotron_freq * B_norm * std::abs(Z) / A;
+
+                max_freq = std::max(max_freq, species_plasma_freq);
+                max_freq = std::max(max_freq, species_cyclotron_freq);
+            }
+        }
+    }
+
+    double max_freq_single = 0.0;
+    for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
+        max_freq_single = std::max(max_freq_single, max_freq[lane]);
+    }
+    double max_freq_all = Utilities::MPI::max(max_freq_single, MPI_COMM_WORLD);
+
+    return 0.2 / max_freq_all;
 }
 
 template class FiveMomentExplicitSourceOperator<1>;

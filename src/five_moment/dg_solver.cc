@@ -29,12 +29,17 @@ void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback,
         TimestepCallback diagnostic_callback) {
     auto step = [&](double t, double dt) -> bool {
         TimestepRequest request(dt, true);
+
+        extension->set_time(t);
+
         const TimestepResult result = ssp_integrator->evolve_one_time_step(
                 explicit_operator, solution, request, t);
         if (!result.successful) {
             return false;
         }
-        implicit_source_operator.evolve_one_time_step(solution.mesh_sol, result.achieved_dt);
+        if (!explicit_fluid_field_coupling) {
+            implicit_source_operator.evolve_one_time_step(solution.mesh_sol, result.achieved_dt);
+        }
 
         std::cout << "t = " << t << std::endl;
         return true;

@@ -52,6 +52,7 @@ double FiveMomentExplicitOperator<dim>::recommend_dt(const MatrixFree<dim>& mf, 
     if (fields_enabled) {
         dt = std::min(dt, maxwell_flux.recommend_dt(mf, soln));
     }
+    dt = std::min(dt, explicit_sources.recommend_dt(mf, soln));
     return dt;
 }
 

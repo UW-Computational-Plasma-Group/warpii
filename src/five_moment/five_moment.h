@@ -133,6 +133,7 @@ The components are
 where `phi` and `psi` are the scalar divergence error indicators for Gauss's law and the div-B law,
 as used in the perfectly hyperbolic Maxwell's equation system.
             )");
+    prm.declare_entry("explicit_fluid_field_coupling", "false", Patterns::Bool());
     prm.declare_entry("gas_gamma", "1.6666666666667", Patterns::Double(),
             R"(The gas gamma, AKA the ratio of specific heats, AKA `(n_dims+2)/2` for a plasma.
 Defaults to 5/3, the value for simple ions with 3 degrees of freedom.)");
@@ -176,6 +177,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
     unsigned int fe_degree = prm.get_integer("fe_degree");
     std::string fields_enabled_str = prm.get("fields_enabled");
     bool fields_enabled = (fields_enabled_str == "true" || (fields_enabled_str == "auto" && n_species > 1));
+    bool explicit_fluid_field_coupling = prm.get_bool("explicit_fluid_field_coupling");
 
     unsigned int n_field_components = fields_enabled ? 8 : 0;
     unsigned int n_components = n_species * 5 + n_field_components;
@@ -190,7 +192,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
 
     auto dg_solver = std::make_unique<FiveMomentDGSolver<dim>>(
         ext, discretization, species, fields, plasma_norm, gas_gamma, 
-        t_end, n_boundaries, fields_enabled, integrator_type);
+        t_end, n_boundaries, fields_enabled, explicit_fluid_field_coupling, integrator_type);
 
 
     auto app = std::make_unique<FiveMomentApp<dim>>(ext, discretization, species,

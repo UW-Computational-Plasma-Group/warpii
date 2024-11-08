@@ -22,11 +22,13 @@ class FiveMomentExplicitOperator : public ForwardEulerOperator<FiveMSolutionVec>
             std::vector<std::shared_ptr<Species<dim>>> species,
             std::shared_ptr<PHMaxwellFields<dim>> fields,
             PlasmaNormalization plasma_norm,
-            bool fields_enabled
+            bool fields_enabled,
+            bool explicit_fluid_field_coupling
                 ):
             fields_enabled(fields_enabled),
             fluid_flux(extension, discretization, gas_gamma, species, fields_enabled),
-            explicit_sources(extension, discretization, species, fields, plasma_norm, fields_enabled),
+            explicit_sources(extension, discretization, species, fields, plasma_norm, fields_enabled,
+                    explicit_fluid_field_coupling),
             maxwell_flux(discretization, 5*species.size(), fields)
         {}
 
