@@ -65,7 +65,7 @@ class FiveMomentDGSolver {
         : t_end(t_end),
         extension(extension),
           discretization(discretization),
-          solution_helper(species.size(), discretization),
+          solution_helper(species.size(), discretization, plasma_norm),
           species(species),
           fields(fields),
           explicit_operator(extension, discretization, gas_gamma, species, 

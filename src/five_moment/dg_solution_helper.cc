@@ -121,6 +121,39 @@ Tensor<1, 5, double> FiveMomentDGSolutionHelper<dim>::compute_global_integral(
 }
 
 template <int dim>
+Tensor<1, 2, double> FiveMomentDGSolutionHelper<dim>::compute_global_electromagnetic_energy(
+        LinearAlgebra::distributed::Vector<double>&solution) {
+    const auto& mf = discretization->mf;
+    unsigned int first_component = n_species * 5;
+    FEEvaluation<dim, -1, 0, 8, double> phi(mf, 0, 1, first_component);
+
+    Tensor<1, 2, double> sum({0.0, 0.0});
+
+    for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
+        phi.reinit(cell);
+        phi.gather_evaluate(solution, EvaluationFlags::values);
+        for (unsigned int q : phi.quadrature_point_indices()) {
+            const auto val = phi.get_value(q);
+            auto squared = Tensor<1, 8, VectorizedArray<double>>();
+            for (unsigned int comp = 0; comp < 8; comp++) {
+                squared[comp] = val[comp] * val[comp];
+            }
+            phi.submit_value(squared, q);
+        }
+        auto cell_integral = phi.integrate_value();
+        for (unsigned int lane = 0; lane < mf.n_active_entries_per_cell_batch(cell); lane++) {
+            const auto E2 = cell_integral[0][lane] + cell_integral[1][lane] + cell_integral[2][lane];
+            const auto B2 = cell_integral[3][lane] + cell_integral[4][lane] + cell_integral[5][lane];
+            const auto c = plasma_norm.omega_p_tau / plasma_norm.omega_c_tau;
+            sum[0] += 0.5 * E2 / (c * c);
+            sum[1] += 0.5 * B2;
+        }
+    }
+    sum = Utilities::MPI::sum(sum, MPI_COMM_WORLD);
+    return sum;
+}
+
+template <int dim>
 double FiveMomentDGSolutionHelper<dim>::compute_global_electrostatic_energy(
     LinearAlgebra::distributed::Vector<double>& solution) {
     auto zero = Functions::ZeroFunction<dim>(5*n_species + 8);

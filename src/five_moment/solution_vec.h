@@ -11,6 +11,8 @@ namespace warpii {
             public:
                 void swap(FiveMBoundaryIntegratedFluxesVector& other);
 
+                void zero();
+
                 template <int dim>
                 void add(unsigned int boundary_id, Tensor<1, 5, double> flux);
 
@@ -20,7 +22,6 @@ namespace warpii {
 
                 void reinit(const FiveMBoundaryIntegratedFluxesVector& other);
 
-                template <int dim>
                 Tensor<1, 5, double> at_boundary(unsigned int boundary_id);
 
                 bool is_empty();
@@ -35,19 +36,12 @@ namespace warpii {
             }
         }
 
-        template <int dim>
-        Tensor<1, 5, double> FiveMBoundaryIntegratedFluxesVector::at_boundary(unsigned int boundary_id) {
-            Tensor<1, 5, double> result;
-            for (unsigned int comp = 0; comp < 5; comp++) {
-                result[comp] = data[boundary_id * (5) + comp];
-            }
-            return result;
-        }
 
         class FiveMSolutionVec {
             public:
                 LinearAlgebra::distributed::Vector<double> mesh_sol;
-                FiveMBoundaryIntegratedFluxesVector boundary_integrated_fluxes;
+                std::vector<FiveMBoundaryIntegratedFluxesVector> boundary_integrated_fluxes;
+                Vector<double> boundary_integrated_normal_poynting_vectors;
 
             void reinit(const FiveMSolutionVec& other);
 

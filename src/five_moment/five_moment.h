@@ -6,7 +6,9 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 #include <fstream>
+#include <iomanip>
 #include <memory>
+#include <string>
 
 #include "app.h"
 #include "grid.h"
@@ -45,6 +47,7 @@ class FiveMomentApp : public AbstractApp {
         std::unique_ptr<FiveMomentDGSolver<dim>> solver, 
         double gas_gamma,
         bool fields_enabled,
+        unsigned int n_boundaries,
         bool write_output,
         double t_end,
         unsigned int n_writeout_frames
@@ -56,6 +59,7 @@ class FiveMomentApp : public AbstractApp {
           solver(std::move(solver)),
           gas_gamma(gas_gamma),
           fields_enabled(fields_enabled),
+          n_boundaries(n_boundaries),
           write_output(write_output),
           t_end(t_end),
           n_writeout_frames(n_writeout_frames)
@@ -93,6 +97,7 @@ class FiveMomentApp : public AbstractApp {
     std::unique_ptr<FiveMomentDGSolver<dim>> solver;
     double gas_gamma;
     bool fields_enabled;
+    unsigned int n_boundaries;
     bool write_output;
     double t_end;
     unsigned int n_writeout_frames;
@@ -199,6 +204,7 @@ std::unique_ptr<FiveMomentApp<dim>> FiveMomentApp<dim>::create_from_parameters(
                                                     grid, std::move(dg_solver),
                                                     gas_gamma, 
                                                     fields_enabled,
+                                                    n_boundaries,
                                                     write_output,
                                                     t_end,
                                                     n_writeout_frames);
@@ -343,18 +349,67 @@ void FiveMomentApp<dim>::append_diagnostics(const double time, const bool with_h
         AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
         std::string header_string = "time";
         if (fields_enabled) {
-            header_string += ",electrostatic_energy";
+            header_string += ",electric_energy";
+            header_string += ",magnetic_energy";
+            
+            for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+                header_string += ",normal_poynting_vector_boundary_" + std::to_string(boundary_id);
+            }
         }
+        for (auto& sp : species) {
+            header_string += "," + sp->name + "_mass";
+            header_string += "," + sp->name + "_x_momentum";
+            header_string += "," + sp->name + "_y_momentum";
+            header_string += "," + sp->name + "_z_momentum";
+            header_string += "," + sp->name + "_energy";
+
+            for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+                header_string += "," + sp->name + "_mass_flux_boundary_" + std::to_string(boundary_id);
+                header_string += "," + sp->name + "_x_momentum_flux_boundary_" + std::to_string(boundary_id);
+                header_string += "," + sp->name + "_y_momentum_flux_boundary_" + std::to_string(boundary_id);
+                header_string += "," + sp->name + "_z_momentum_flux_boundary_" + std::to_string(boundary_id);
+                header_string += "," + sp->name + "_energy_flux_boundary_" + std::to_string(boundary_id);
+            }
+        }
+
         file << header_string << std::endl;
     }
 
     std::ofstream file("diagnostics.csv", std::ios::app);
     AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
-    file << time;
+    file << std::setprecision(16) << time;
     if (fields_enabled) {
-        file << "," << get_solution_helper()
-            .compute_global_electrostatic_energy(get_solution().mesh_sol);
+        const auto electromagnetic_energies = get_solution_helper()
+            .compute_global_electromagnetic_energy(get_solution().mesh_sol);
+                
+        file << "," << electromagnetic_energies[0] << "," << electromagnetic_energies[1];
+
+        for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+            file << "," << get_solution().boundary_integrated_normal_poynting_vectors(boundary_id);
+        }
     }
+    for (unsigned int i = 0; i < species.size(); i++) {
+        const auto global_integral = get_solution_helper()
+            .compute_global_integral(get_solution().mesh_sol, i);
+        file << "," << global_integral[0]
+            << "," << global_integral[1]
+            << "," << global_integral[2]
+            << "," << global_integral[3]
+            << "," << global_integral[4];
+
+            for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+                const auto boundary_fluxes = get_solution().boundary_integrated_fluxes.at(i)
+                    .at_boundary(boundary_id);
+                file << "," << boundary_fluxes[0]
+                    << "," << boundary_fluxes[1]
+                    << "," << boundary_fluxes[2]
+                    << "," << boundary_fluxes[3]
+                    << "," << boundary_fluxes[4];
+            }
+    }
+
+
+
     file << std::endl;
 }
 

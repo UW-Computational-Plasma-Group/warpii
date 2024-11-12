@@ -1,4 +1,5 @@
 #pragma once
+#include <deal.II/base/tensor.h>
 #include <deal.II/base/types.h>
 #include <deal.II/base/utilities.h>
 #include <deal.II/lac/la_parallel_vector.h>
@@ -14,6 +15,7 @@
 #include "../dgsem/nodal_dg_discretization.h"
 #include "../dof_utils.h"
 #include "../rk.h"
+#include "utilities.h"
 #include "bc_map.h"
 #include "fields.h"
 #include "function_eval.h"
@@ -76,7 +78,9 @@ class MaxwellFluxDGOperator : ForwardEulerOperator<SolutionVec> {
         const MatrixFree<dim, double> &mf,
         LinearAlgebra::distributed::Vector<double> &dst,
         const LinearAlgebra::distributed::Vector<double> &src,
-        const std::pair<unsigned int, unsigned int> &face_range) const;
+        const std::pair<unsigned int, unsigned int> &face_range,
+        Vector<double> &d_dt_boundary_integrated_normal_poynting_vectors
+        ) const;
 
     double compute_cell_transport_speed(
         const MatrixFree<dim, double> &mf,
@@ -92,12 +96,51 @@ TimestepResult MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_st
     auto Mdudt_register = sol_registers.at(0);
     auto dudt_register = sol_registers.at(1);
 
+    std::function<void(const MatrixFree<dim, Number> &,
+                       LinearAlgebra::distributed::Vector<double> &,
+                       const LinearAlgebra::distributed::Vector<double> &,
+                       const std::pair<unsigned int, unsigned int> &)>
+        cell_operation =
+            [&](const MatrixFree<dim, Number> &mf,
+                LinearAlgebra::distributed::Vector<double> &dst,
+                const LinearAlgebra::distributed::Vector<double> &src,
+                const std::pair<unsigned int, unsigned int> &cell_range)
+        -> void { this->local_apply_cell(mf, dst, src, cell_range); };
+    std::function<void(const MatrixFree<dim, Number> &,
+                       LinearAlgebra::distributed::Vector<double> &,
+                       const LinearAlgebra::distributed::Vector<double> &,
+                       const std::pair<unsigned int, unsigned int> &)>
+        face_operation =
+            [&](const MatrixFree<dim, Number> &mf,
+                LinearAlgebra::distributed::Vector<double> &dst,
+                const LinearAlgebra::distributed::Vector<double> &src,
+                const std::pair<unsigned int, unsigned int> &cell_range)
+        -> void { this->local_apply_face(mf, dst, src, cell_range); };
+
+        Vector<double> &d_dt_boundary_integrated_normal_poynting_vectors =
+            dudt_register.boundary_integrated_normal_poynting_vectors;
+        d_dt_boundary_integrated_normal_poynting_vectors = 0.0;
+
+        std::function<void(const MatrixFree<dim, Number> &,
+                           LinearAlgebra::distributed::Vector<double> &,
+                           const LinearAlgebra::distributed::Vector<double> &,
+                           const std::pair<unsigned int, unsigned int> &)>
+            boundary_operation =
+                [this, &d_dt_boundary_integrated_normal_poynting_vectors](
+                    const MatrixFree<dim, Number> &mf,
+                    LinearAlgebra::distributed::Vector<double> &dst,
+                    const LinearAlgebra::distributed::Vector<double> &src,
+                    const std::pair<unsigned int, unsigned int> &cell_range) -> void {
+                this->local_apply_boundary_face(mf, dst, src, cell_range,
+                        d_dt_boundary_integrated_normal_poynting_vectors);
+        };
+
     // bool zero_out_register = true;
     discretization->mf.loop(
-        &MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_cell,
-        &MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_face,
-        &MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face,
-        this, Mdudt_register.mesh_sol, u.mesh_sol, true,
+            cell_operation,
+            face_operation,
+            boundary_operation,
+        Mdudt_register.mesh_sol, u.mesh_sol, true,
         MatrixFree<dim, double>::DataAccessOnFaces::values,
         MatrixFree<dim, double>::DataAccessOnFaces::values);
 
@@ -122,6 +165,10 @@ TimestepResult MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_st
                         b * dst_i + a * u_i + c * dt_request.requested_dt * dudt_i;
                 }
             });
+        dst.boundary_integrated_normal_poynting_vectors.sadd(b, a,
+                u.boundary_integrated_normal_poynting_vectors);
+        dst.boundary_integrated_normal_poynting_vectors.sadd(1.0, c * dt_request.requested_dt,
+            dudt_register.boundary_integrated_normal_poynting_vectors);
     }
 
     return TimestepResult::success(dt_request);
@@ -212,7 +259,9 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
     const MatrixFree<dim, double> &mf,
     LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
-    const std::pair<unsigned int, unsigned int> &face_range) const {
+    const std::pair<unsigned int, unsigned int> &face_range,
+    Vector<double> &d_dt_boundary_integrated_normal_poynting_vectors
+    ) const {
 
     using VA = VectorizedArray<double>;
 
@@ -235,6 +284,7 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
 
             Tensor<1, 3, VA> E_m;
             Tensor<1, 3, VA> B_m;
+
             VA phi_m;
             VA psi_m;
             for (unsigned int d = 0; d < 3; d++) {
@@ -243,6 +293,11 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             }
             phi_m = val_m[6];
             psi_m = val_m[7];
+
+            const auto normal_poynting_vector = n3d * cross_product_3d(E_m, B_m);
+            for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
+                d_dt_boundary_integrated_normal_poynting_vectors[boundary_id] += normal_poynting_vector[lane] * fe_eval_m.JxW(q)[lane];
+            }
 
             Tensor<1, 8, VA> val_bdy;
             Tensor<1, 8, VA> val_p;
@@ -305,6 +360,7 @@ void MaxwellFluxDGOperator<dim, SolutionVec>::local_apply_boundary_face(
             }
 
             const auto numerical_flux = ph_maxwell_numerical_flux(val_m, val_p, n, constants);
+            SHOW(numerical_flux[0]);
             fe_eval_m.submit_value(-numerical_flux, q);
         }
 
