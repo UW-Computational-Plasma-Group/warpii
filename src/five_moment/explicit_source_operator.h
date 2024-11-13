@@ -21,13 +21,15 @@ class FiveMomentExplicitSourceOperator
         std::vector<std::shared_ptr<Species<dim>>> species,
         std::shared_ptr<PHMaxwellFields<dim>> fields,
         PlasmaNormalization plasma_norm,
-        bool fields_enabled)
+        bool fields_enabled,
+        bool explicit_fluid_field_coupling)
         : extension(extension),
           discretization(discretization),
           species(species),
           fields(fields),
           plasma_norm(plasma_norm),
-          fields_enabled(fields_enabled)
+          fields_enabled(fields_enabled),
+          explicit_fluid_field_coupling(explicit_fluid_field_coupling)
     {}
 
     TimestepResult perform_forward_euler_step(
@@ -35,6 +37,8 @@ class FiveMomentExplicitSourceOperator
         std::vector<FiveMSolutionVec> &sol_registers, const TimestepRequest dt,
         const double t, 
         const double b=0.0, const double a=1.0, const double c=1.0) override;
+
+    double recommend_dt(const MatrixFree<dim>& mf, const FiveMSolutionVec &soln);
 
    private:
     void local_apply_inverse_mass_matrix(
@@ -56,6 +60,7 @@ class FiveMomentExplicitSourceOperator
     std::shared_ptr<PHMaxwellFields<dim>> fields;
     PlasmaNormalization plasma_norm;
     bool fields_enabled;
+    bool explicit_fluid_field_coupling;
 };
 
 }  // namespace five_moment

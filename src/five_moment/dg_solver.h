@@ -60,17 +60,20 @@ class FiveMomentDGSolver {
         double t_end,
         unsigned int n_boundaries,
         bool fields_enabled,
+        bool explicit_fluid_field_coupling,
         const std::string& integrator_type)
         : t_end(t_end),
+        extension(extension),
           discretization(discretization),
           solution_helper(species.size(), discretization),
           species(species),
           fields(fields),
           explicit_operator(extension, discretization, gas_gamma, species, 
-                  fields, plasma_norm, fields_enabled),
+                  fields, plasma_norm, fields_enabled, explicit_fluid_field_coupling),
           implicit_source_operator(plasma_norm, species, discretization, fields_enabled),
           n_boundaries(n_boundaries),
           fields_enabled(fields_enabled),
+          explicit_fluid_field_coupling(explicit_fluid_field_coupling),
           ssp_integrator(create_integrator<dim>(integrator_type))
         {}
 
@@ -88,6 +91,7 @@ class FiveMomentDGSolver {
 
    private:
     double t_end;
+    std::shared_ptr<five_moment::Extension<dim>> extension;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
     FiveMomentDGSolutionHelper<dim> solution_helper;
     std::vector<std::shared_ptr<Species<dim>>> species;
@@ -98,6 +102,7 @@ class FiveMomentDGSolver {
     FiveMomentImplicitSourceOperator<dim> implicit_source_operator;
     unsigned int n_boundaries;
     bool fields_enabled;
+    bool explicit_fluid_field_coupling;
     std::shared_ptr<SSPRKIntegrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>> ssp_integrator;
 };
 

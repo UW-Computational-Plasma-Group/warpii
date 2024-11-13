@@ -78,6 +78,8 @@ class Extension : public virtual warpii::Extension,
 
     }
 
+    virtual void set_time(double t);
+
     virtual void declare_source_parameters(ParameterHandler& prm,
             unsigned int species_index);
 
@@ -245,6 +247,9 @@ Tensor<1, 5, VectorizedArray<double>> Extension<dim>::boundary_flux( \
 
 N_SPECIES_IMPLS(1)
 N_SPECIES_IMPLS(2)
+
+template <int dim>
+void Extension<dim>::set_time(double ) {}
 
 template <int dim>
 void Extension<dim>::declare_bc_parameters(ParameterHandler&, 
