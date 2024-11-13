@@ -796,7 +796,10 @@ bool FluidFluxESDGSEMOperator<dim>::check_if_solution_is_positive(
             for (unsigned int lane = 0; lane < VectorizedArray<double>::size(); lane++) {
                 if (cell_avg[0][lane] < 0.0 || pressure[lane] < 1e-13) {
                     std::cout << "cell = " << cell << std::endl;
-                    std::cout << "location = " << phi.quadrature_point(0)[0][lane] << ", " << phi.quadrature_point(0)[1][lane] << std::endl;
+                    std::cout << "location = ";
+                    for (unsigned int d = 0; d < dim; d++) {
+                        std::cout << phi.quadrature_point(0)[d][lane] << ", ";
+                    }
                     std::cout << "cell_avg = " << cell_avg << std::endl;
                     std::cout << "pressure = " << pressure << std::endl;
                     return false;
