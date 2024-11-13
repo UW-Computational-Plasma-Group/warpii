@@ -61,6 +61,7 @@ class FiveMomentDGSolver {
         unsigned int n_boundaries,
         bool fields_enabled,
         bool explicit_fluid_field_coupling,
+        std::string splitting_scheme,
         const std::string& integrator_type)
         : t_end(t_end),
         extension(extension),
@@ -74,6 +75,7 @@ class FiveMomentDGSolver {
           n_boundaries(n_boundaries),
           fields_enabled(fields_enabled),
           explicit_fluid_field_coupling(explicit_fluid_field_coupling),
+          splitting_scheme(splitting_scheme),
           ssp_integrator(create_integrator<dim>(integrator_type))
         {}
 
@@ -103,6 +105,7 @@ class FiveMomentDGSolver {
     unsigned int n_boundaries;
     bool fields_enabled;
     bool explicit_fluid_field_coupling;
+    std::string splitting_scheme;
     std::shared_ptr<SSPRKIntegrator<FiveMSolutionVec, FiveMomentExplicitOperator<dim>>> ssp_integrator;
 };
 
