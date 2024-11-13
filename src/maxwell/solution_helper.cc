@@ -59,6 +59,18 @@ double PHMaxwellSolutionHelper<dim>::compute_global_error(
             VectorTools::NormType::L2_norm);
 }
 
+template <int dim>
+Tensor<1, 2, double> PHMaxwellSolutionHelper<dim>::compute_global_electromagnetic_energy(
+        const LinearAlgebra::distributed::Vector<double>&solution) const {
+    const auto squared = discretization->template global_integral_squared<8>(0, solution);
+
+    const double E2 = squared[0] + squared[1] + squared[2];
+    const double B2 = squared[3] + squared[4] + squared[5];
+
+    const auto c = plasma_norm.omega_p_tau / plasma_norm.omega_c_tau;
+    return Tensor<1, 2, double>({0.5 * E2 / (c * c), 0.5 * B2});
+}
+
 
 template class PHMaxwellSolutionHelper<1>;
 template class PHMaxwellSolutionHelper<2>;

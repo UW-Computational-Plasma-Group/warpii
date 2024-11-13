@@ -72,6 +72,14 @@ class NodalDGDiscretization {
         return dummy_q_collection;
     }
 
+    template <int m>
+    Tensor<1, m, double> global_integral_squared(int first_component,
+            const LinearAlgebra::distributed::Vector<double>&solution);
+
+    template <int m>
+    Tensor<1, m, double> global_integral(int first_component,
+            const LinearAlgebra::distributed::Vector<double>&solution);
+
     void build_data_out_patches(DataOut<dim>& data_out) {
         data_out.build_patches(mapping, fe.degree, DataOut<dim>::curved_inner_cells);
     }

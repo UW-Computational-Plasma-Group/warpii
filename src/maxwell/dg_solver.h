@@ -5,6 +5,7 @@
 #include "maxwell_flux_dg_operator.h"
 #include "../timestepper.h"
 #include "solution_helper.h"
+#include "../normalization.h"
 
 namespace warpii {
 
@@ -15,13 +16,14 @@ class PHMaxwellDGSolver {
     PHMaxwellDGSolver(
         double t_end,
         std::shared_ptr<NodalDGDiscretization<dim>> discretization,
-        std::shared_ptr<PHMaxwellFields<dim>> fields, unsigned int n_boundaries)
+        std::shared_ptr<PHMaxwellFields<dim>> fields, unsigned int n_boundaries,
+        PlasmaNormalization plasma_norm)
         : t_end(t_end),
           discretization(discretization),
           fields(fields),
           n_boundaries(n_boundaries),
           flux_operator(discretization, 0, fields),
-          solution_helper(discretization)
+          solution_helper(discretization, plasma_norm)
     {}
 
     void reinit();
@@ -33,7 +35,7 @@ class PHMaxwellDGSolver {
     const MaxwellSolutionVec& get_solution() {
         return solution;
     }
-    const PHMaxwellSolutionHelper<dim>& get_solution_helper() {
+    const PHMaxwellSolutionHelper<dim>& get_solution_helper() const {
         return solution_helper;
     }
 
