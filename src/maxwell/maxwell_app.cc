@@ -82,10 +82,10 @@ std::unique_ptr<PHMaxwellApp<dim>> PHMaxwellApp<dim>::create_from_parameters(
         grid, n_components, fe_degree);
 
     const auto dg_solver = std::make_shared<PHMaxwellDGSolver<dim>>(
-        t_end, discretization, fields, n_boundaries);
+        t_end, discretization, fields, n_boundaries, plasma_norm);
 
     auto app = std::make_unique<PHMaxwellApp<dim>>(
-        discretization, fields, grid, dg_solver, write_output, n_writeout_frames, t_end);
+        discretization, fields, grid, dg_solver, write_output, n_writeout_frames, n_boundaries, t_end);
 
     return app;
 }
@@ -163,6 +163,33 @@ void PHMaxwellApp<dim>::output_results(const unsigned int frame_number) {
     const std::string filename =
         "solution_" + Utilities::int_to_string(frame_number, 3) + ".vtu";
     data_out.write_vtu_in_parallel(filename, MPI_COMM_WORLD);
+}
+
+template <int dim>
+void PHMaxwellApp<dim>::append_diagnostics(const double time, const bool with_header) {
+    if (with_header) {
+        std::ofstream file("diagnostics.csv");
+        AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
+        std::string header_string = "time";
+        header_string += ",electric_energy";
+        header_string += ",magnetic_energy";
+        
+        for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+            header_string += ",normal_poynting_vector_boundary_" + std::to_string(boundary_id);
+        }
+    }
+    std::ofstream file("diagnostics.csv", std::ios::app);
+    AssertThrow(file.is_open(), ExcMessage("Could not open diagnostics file"));
+    file << std::setprecision(16) << time;
+
+    const auto electromagnetic_energies = get_solution_helper()
+        .compute_global_electromagnetic_energy(get_solution().mesh_sol);
+            
+    file << "," << electromagnetic_energies[0] << "," << electromagnetic_energies[1];
+
+    for (unsigned int boundary_id = 0; boundary_id < n_boundaries; boundary_id++) {
+        file << "," << get_solution().boundary_integrated_normal_poynting_vectors(boundary_id);
+    }
 }
 
 template class PHMaxwellApp<1>;

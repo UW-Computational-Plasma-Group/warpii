@@ -48,13 +48,6 @@ TimestepResult FiveMomentExplicitSourceOperator<dim>::perform_forward_euler_step
                         b * dst_i + a * u_i + c * dt_request.requested_dt * dudt_i;
                 }
             });
-        // dst = beta * dest + a * u + c * dt * dudt
-        if (!dst.boundary_integrated_fluxes.is_empty()) {
-            dst.boundary_integrated_fluxes.sadd(b, a, u.boundary_integrated_fluxes);
-            dst.boundary_integrated_fluxes.sadd(
-                1.0, c * dt_request.requested_dt, 
-                dudt_register.boundary_integrated_fluxes);
-        }
     }
 
     return TimestepResult::success(dt_request);

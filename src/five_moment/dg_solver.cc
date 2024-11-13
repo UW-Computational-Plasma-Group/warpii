@@ -1,4 +1,5 @@
 #include "dg_solver.h"
+#include "solution_vec.h"
 
 namespace warpii {
 namespace five_moment {
@@ -7,7 +8,11 @@ template <int dim>
 void FiveMomentDGSolver<dim>::reinit() {
     discretization->reinit();
     discretization->perform_allocation(solution.mesh_sol);
-    solution.boundary_integrated_fluxes.reinit(n_boundaries, dim);
+    for (unsigned int i = 0; i < species.size(); i++) {
+        solution.boundary_integrated_fluxes.emplace_back();
+        solution.boundary_integrated_fluxes.at(i).reinit(n_boundaries, dim);
+    }
+    solution.boundary_integrated_normal_poynting_vectors.reinit(n_boundaries);
     ssp_integrator->reinit(solution, 3);
 }
 

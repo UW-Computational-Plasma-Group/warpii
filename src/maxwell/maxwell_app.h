@@ -26,13 +26,16 @@ class PHMaxwellApp : public AbstractApp {
                  std::shared_ptr<Grid<dim>> grid, 
                  std::shared_ptr<PHMaxwellDGSolver<dim>> dg_solver,
                  bool write_output,
-                 unsigned int n_writeout_frames, double t_end)
+                 unsigned int n_writeout_frames, 
+                 unsigned int n_boundaries,
+                 double t_end)
         : discretization(discretization),
           fields(fields),
           grid(grid),
           dg_solver(dg_solver),
           write_output(write_output),
           n_writeout_frames(n_writeout_frames),
+          n_boundaries(n_boundaries),
           t_end(t_end) {}
 
     static void declare_parameters(ParameterHandler &prm);
@@ -56,6 +59,8 @@ class PHMaxwellApp : public AbstractApp {
         return dg_solver->get_solution_helper();
     }
 
+    void append_diagnostics(const double time, const bool with_header);
+
    private:
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
     std::shared_ptr<PHMaxwellFields<dim>> fields;
@@ -63,6 +68,7 @@ class PHMaxwellApp : public AbstractApp {
     std::shared_ptr<PHMaxwellDGSolver<dim>> dg_solver;
     bool write_output;
     unsigned int n_writeout_frames;
+    unsigned int n_boundaries;
     double t_end;
 };
 }  // namespace maxwell

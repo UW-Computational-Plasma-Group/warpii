@@ -95,29 +95,23 @@ template <int dim>
 Tensor<1, 5, double> FiveMomentDGSolutionHelper<dim>::compute_global_integral(
         LinearAlgebra::distributed::Vector<double>&solution,
         unsigned int species_index) {
-    const auto& mf = discretization->mf;
     unsigned int first_component = species_index * 5;
-    FEEvaluation<dim, -1, 0, 5, double> phi(mf, 0, 1, first_component);
+    const auto integral = discretization->template global_integral<5>(
+            first_component, solution);
+    return integral;
+}
 
-    Tensor<1, 5, double> sum;
-    for (unsigned int comp = 0; comp < 5; comp++) {
-        sum[comp] = 0.0;
-    }
-    for (unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell) {
-        phi.reinit(cell);
-        phi.gather_evaluate(solution, EvaluationFlags::values);
-        for (unsigned int q : phi.quadrature_point_indices()) {
-            phi.submit_value(phi.get_value(q), q);
-        }
-        auto cell_integral = phi.integrate_value();
-        for (unsigned int lane = 0; lane < mf.n_active_entries_per_cell_batch(cell); lane++) {
-            for (unsigned int comp = 0; comp < 5; comp++) {
-                sum[comp] += cell_integral[comp][lane];
-            }
-        }
-    }
-    sum = Utilities::MPI::sum(sum, MPI_COMM_WORLD);
-    return sum;
+template <int dim>
+Tensor<1, 2, double> FiveMomentDGSolutionHelper<dim>::compute_global_electromagnetic_energy(
+        LinearAlgebra::distributed::Vector<double>&solution) {
+    unsigned int first_component = n_species * 5;
+    const auto squared = discretization->template global_integral_squared<8>(first_component, solution);
+
+    const double E2 = squared[0] + squared[1] + squared[2];
+    const double B2 = squared[3] + squared[4] + squared[5];
+
+    const auto c = plasma_norm.omega_p_tau / plasma_norm.omega_c_tau;
+    return Tensor<1, 2, double>({0.5 * E2 / (c * c), 0.5 * B2});
 }
 
 template <int dim>

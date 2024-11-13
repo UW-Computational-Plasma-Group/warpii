@@ -127,8 +127,8 @@ end
 
     warpii_obj.run();
     auto global_integral = helper.compute_global_integral(soln.mesh_sol, 0);
-    auto inflow_flux = soln.boundary_integrated_fluxes.at_boundary<1>(0);
-    auto outflow_flux = soln.boundary_integrated_fluxes.at_boundary<1>(1);
+    auto inflow_flux = soln.boundary_integrated_fluxes.at(0).at_boundary(0);
+    auto outflow_flux = soln.boundary_integrated_fluxes.at(0).at_boundary(1);
     auto balance = global_integral + inflow_flux + outflow_flux;
     for (unsigned int comp = 0; comp < 3; comp++) {
         EXPECT_NEAR(balance[comp], ic_global_integral[comp], 1e-13);

@@ -252,7 +252,7 @@ std::string format_workdir(const ParameterHandler &prm,
     std::string inp =
         (opts.input == "-") ? "STDIN" : remove_file_extension(opts.input);
 
-    // Loop until all occurrences of "%A" are replaced
+    // Loop until all occurrences of "%I" are replaced
     while ((pos = result.find("%I", pos)) != std::string::npos) {
         result.replace(pos, 2, inp);
         pos += inp.length();  // Move past the last replaced occurrence

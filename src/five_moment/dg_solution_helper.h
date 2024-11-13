@@ -16,6 +16,7 @@
 #include "function_eval.h"
 #include "../dgsem/nodal_dg_discretization.h"
 #include "grid.h"
+#include "../normalization.h"
 
 namespace warpii {
 namespace five_moment {
@@ -24,9 +25,12 @@ class FiveMomentDGSolutionHelper {
    public:
     FiveMomentDGSolutionHelper(
             unsigned int n_species,
-            std::shared_ptr<NodalDGDiscretization<dim>> discretization):
+            std::shared_ptr<NodalDGDiscretization<dim>> discretization,
+            PlasmaNormalization plasma_norm):
         n_species(n_species),
-        discretization(discretization) {}
+        discretization(discretization),
+        plasma_norm(plasma_norm)
+    {}
 
     void project_fluid_quantities(
         const Function<dim> &function,
@@ -53,12 +57,20 @@ class FiveMomentDGSolutionHelper {
         LinearAlgebra::distributed::Vector<double>& solution,
         unsigned int species_index);
 
+    /**
+     * Returns a tensor of the global integrals of |E|^2/(2c^2) and |B|^2/2,
+     * which are the global electric and magnetic energy, respectively.
+     */
+    Tensor<1, 2, double> compute_global_electromagnetic_energy(
+        LinearAlgebra::distributed::Vector<double>& solution);
+
     double compute_global_electrostatic_energy(
         LinearAlgebra::distributed::Vector<double>& solution);
 
    private:
     unsigned int n_species;
     std::shared_ptr<NodalDGDiscretization<dim>> discretization;
+    PlasmaNormalization plasma_norm;
 };
 
 }  // namespace five_moment

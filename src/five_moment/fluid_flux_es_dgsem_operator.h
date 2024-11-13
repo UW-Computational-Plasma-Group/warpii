@@ -89,7 +89,7 @@ class FluidFluxESDGSEMOperator : ForwardEulerOperator<FiveMSolutionVec> {
         LinearAlgebra::distributed::Vector<double> &dst,
         const LinearAlgebra::distributed::Vector<double> &src,
         const std::pair<unsigned int, unsigned int> &face_range,
-        FiveMBoundaryIntegratedFluxesVector &boundary_integrated_fluxes,
+        std::vector<FiveMBoundaryIntegratedFluxesVector> &boundary_integrated_fluxes,
         const double t) const;
 
     void local_apply_positivity_limiter(
@@ -186,8 +186,11 @@ TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                     const LinearAlgebra::distributed::Vector<double> &src,
                     const std::pair<unsigned int, unsigned int> &cell_range)
             -> void { this->local_apply_face(mf, dst, src, cell_range); };
-        FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes =
+        std::vector<FiveMBoundaryIntegratedFluxesVector> &d_dt_boundary_integrated_fluxes =
             dudt_register.boundary_integrated_fluxes;
+        for (auto& boundary_fluxes : d_dt_boundary_integrated_fluxes) {
+            boundary_fluxes.zero();
+        }
         std::function<void(const MatrixFree<dim, Number> &,
                            LinearAlgebra::distributed::Vector<double> &,
                            const LinearAlgebra::distributed::Vector<double> &,
@@ -237,11 +240,15 @@ TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                             b * dst_i + a * u_i + c * dt * dudt_i;
                     }
                 });
-            // dst = beta * dest + a * u + c * dt * dudt
-            if (!dst.boundary_integrated_fluxes.is_empty()) {
-                dst.boundary_integrated_fluxes.sadd(b, a, u.boundary_integrated_fluxes);
-                dst.boundary_integrated_fluxes.sadd(
-                    1.0, c * dt, dudt_register.boundary_integrated_fluxes);
+            // dst = b * dest + a * u + c * dt * dudt
+            for (unsigned int i = 0; i < n_species; i++) {
+                if (!dst.boundary_integrated_fluxes.at(i).is_empty()) {
+                    dst.boundary_integrated_fluxes.at(i).sadd(b, a, u.boundary_integrated_fluxes.at(i));
+                    dst.boundary_integrated_fluxes.at(i).sadd(
+                        1.0, c * dt, dudt_register.boundary_integrated_fluxes.at(i));
+                }
+                dst.boundary_integrated_normal_poynting_vectors.sadd(
+                        b, a, u.boundary_integrated_normal_poynting_vectors);
             }
 
             if (check_if_solution_is_positive(discretization->get_matrix_free(), dst.mesh_sol)) {
@@ -421,7 +428,7 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
     const MatrixFree<dim> &mf, LinearAlgebra::distributed::Vector<double> &dst,
     const LinearAlgebra::distributed::Vector<double> &src,
     const std::pair<unsigned int, unsigned int> &face_range,
-    FiveMBoundaryIntegratedFluxesVector &d_dt_boundary_integrated_fluxes,
+    std::vector<FiveMBoundaryIntegratedFluxesVector> &d_dt_boundary_integrated_fluxes,
     const double t)
     const {
 
@@ -541,7 +548,7 @@ void FluidFluxESDGSEMOperator<dim>::local_apply_boundary_face(
                 for (unsigned int comp = 0; comp < 5; comp++) {
                     tensor[comp] = integrated_boundary_flux[comp][lane];
                 }
-                d_dt_boundary_integrated_fluxes.add<dim>(boundary_id, tensor);
+                d_dt_boundary_integrated_fluxes.at(species_index).add<dim>(boundary_id, tensor);
             }
         }
     }
