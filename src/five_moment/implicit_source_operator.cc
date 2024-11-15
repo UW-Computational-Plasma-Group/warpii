@@ -43,9 +43,9 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
 
     std::vector<FEEvaluation<dim, -1, 0, 5, double>> species_evals;
     for (unsigned int i = 0; i < n_species; i++) {
-        species_evals.emplace_back(mf, 0, 0, 5 * i);
+        species_evals.emplace_back(mf, 0, 1, 5 * i);
     }
-    FEEvaluation<dim, -1, 0, 8, double> fields_eval(mf, 0, 0, 5 * n_species);
+    FEEvaluation<dim, -1, 0, 8, double> fields_eval(mf, 0, 1, 5 * n_species);
     AssertThrow(species_evals[0].dofs_per_component == fields_eval.dofs_per_component,
             ExcMessage("DOFs per component do not match"));
 
@@ -102,7 +102,7 @@ void FiveMomentImplicitSourceOperator<dim>::local_apply_cell(
                 IxB(1, 0) = -B_z;
                 IxB(1, 2) = B_x;
                 IxB(2, 0) = B_y;
-                IxB(2, 2) = -B_x;
+                IxB(2, 1) = -B_x;
                 for (unsigned int i = 0; i < n_species; i++) {
                     const double Z_i = species[i]->charge;
                     const double A_i = species[i]->mass;
