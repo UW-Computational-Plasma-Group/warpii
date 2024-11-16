@@ -93,7 +93,7 @@ double FiveMomentDGSolutionHelper<dim>::compute_global_error(
 
 template <int dim>
 Tensor<1, 5, double> FiveMomentDGSolutionHelper<dim>::compute_global_integral(
-        LinearAlgebra::distributed::Vector<double>&solution,
+        const LinearAlgebra::distributed::Vector<double>&solution,
         unsigned int species_index) {
     unsigned int first_component = species_index * 5;
     const auto integral = discretization->template global_integral<5>(
@@ -103,7 +103,7 @@ Tensor<1, 5, double> FiveMomentDGSolutionHelper<dim>::compute_global_integral(
 
 template <int dim>
 Tensor<1, 2, double> FiveMomentDGSolutionHelper<dim>::compute_global_electromagnetic_energy(
-        LinearAlgebra::distributed::Vector<double>&solution) {
+        const LinearAlgebra::distributed::Vector<double>&solution) {
     unsigned int first_component = n_species * 5;
     const auto squared = discretization->template global_integral_squared<8>(first_component, solution);
 

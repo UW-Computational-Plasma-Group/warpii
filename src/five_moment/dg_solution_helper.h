@@ -54,7 +54,7 @@ class FiveMomentDGSolutionHelper {
      * Computes the global integral of the solution vector for the given species.
      */
     Tensor<1, 5, double> compute_global_integral(
-        LinearAlgebra::distributed::Vector<double>& solution,
+        const LinearAlgebra::distributed::Vector<double>& solution,
         unsigned int species_index);
 
     /**
@@ -62,7 +62,7 @@ class FiveMomentDGSolutionHelper {
      * which are the global electric and magnetic energy, respectively.
      */
     Tensor<1, 2, double> compute_global_electromagnetic_energy(
-        LinearAlgebra::distributed::Vector<double>& solution);
+        const LinearAlgebra::distributed::Vector<double>& solution);
 
     double compute_global_electrostatic_energy(
         LinearAlgebra::distributed::Vector<double>& solution);

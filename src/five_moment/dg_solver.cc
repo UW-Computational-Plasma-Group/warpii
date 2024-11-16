@@ -1,5 +1,6 @@
 #include "dg_solver.h"
 #include "solution_vec.h"
+#include <iomanip>
 
 namespace warpii {
 namespace five_moment {
@@ -83,6 +84,19 @@ void FiveMomentDGSolver<dim>::solve(TimestepCallback writeout_callback,
 
     std::vector<TimestepCallback> callbacks = {writeout_callback, diagnostic_callback};
     advance(step, t_end, recommend_dt, callbacks);
+}
+
+template<int dim>
+void FiveMomentDGSolver<dim>::print_out_energy_inventory(const FiveMSolutionVec& soln) {
+    const auto emag_energy = solution_helper.compute_global_electromagnetic_energy(soln.mesh_sol);
+    std::cout << std::setprecision(12) << "E2 = " << emag_energy[0] << ", B2 = " << emag_energy[1] << std::endl;
+    double total_energy = emag_energy[0] + emag_energy[1];
+    for (unsigned int i = 0; i < species.size(); i++) {
+        const auto integral = solution_helper.compute_global_integral(soln.mesh_sol, i);
+        std::cout << species[i]->name << " energy = " << integral[4] << std::endl;
+        total_energy += integral[4];
+    }
+    std::cout << "Total energy = " << total_energy << std::endl;
 }
 
 template <int dim>

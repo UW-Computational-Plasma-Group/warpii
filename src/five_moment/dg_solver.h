@@ -91,6 +91,8 @@ class FiveMomentDGSolver {
 
     FiveMomentExplicitOperator<dim>& get_explicit_operator();
 
+    void print_out_energy_inventory(const FiveMSolutionVec& soln);
+
    private:
     double t_end;
     std::shared_ptr<five_moment::Extension<dim>> extension;

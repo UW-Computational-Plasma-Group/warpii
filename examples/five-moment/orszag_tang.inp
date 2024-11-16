@@ -1,0 +1,56 @@
+set Application = FiveMoment
+set n_dims = 2
+set fe_degree = 3
+set n_species = 2
+set n_boundaries = 0
+set write_output = true
+set n_writeout_frames = 100
+
+set ExplicitIntegrator = SSPRK2
+
+set t_end = 1.0
+
+subsection geometry
+    set left = 0.0,0.0
+    set right = 1.0,1.0
+    set nx = 30,30
+end
+
+subsection Normalization
+    set omega_p_tau = 4
+    set omega_c_tau = 10
+end
+
+set fields_enabled = true
+
+subsection PHMaxwellFields
+    set phmaxwell_chi = 0
+    set phmaxwell_gamma = 0
+    subsection InitialCondition
+        set components = 0; 0; 0; \
+                         -0.2*sin(2*pi*y); 0.2*sin(4*pi*x); 0.4; \
+                         0; 0
+    end
+end
+
+subsection Species_0
+    set name = electron
+    set charge = -1
+    set mass = 0.04
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 0.04; -0.2*sin(2*pi*y); 0.2*sin(2*pi*x); \
+                         -1/(10) * (4*pi*cos(4*pi*x) + 2*pi*cos(2*pi*y)); \
+                         0.125
+    end
+end
+
+subsection Species_1
+    set name = ion
+    set charge = 1
+    set mass = 1.0
+    subsection InitialCondition
+        set VariablesType = Primitive
+        set components = 1; -0.2*sin(2*pi*y); 0.2*sin(2*pi*x); 0; 0.125
+    end
+end
