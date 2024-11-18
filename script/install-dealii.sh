@@ -8,8 +8,9 @@ DEALII_BUILD_MODE=RelWithDebInfo
 
 DEALII_SRCDIR=$WARPIISOFT/deps/dealii/src/dealii-${DEALII_VERSION}
 
+mkdir -p $WARPIISOFT/deps
 pushd $WARPIISOFT/deps
-git clone https://github.com/dealii/candi.git &2>/dev/null || (cd candi && git pull)
+(cd candi && git pull) || git clone https://github.com/dealii/candi.git
 pushd candi
 
 sed -i "" "s/^DEAL_II_VERSION.*$/DEAL_II_VERSION=v${DEALII_VERSION}/" candi.cfg
