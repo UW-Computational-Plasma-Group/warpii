@@ -26,8 +26,10 @@ namespace warpii {
                     boundary_integrated_fluxes[i].sadd(s, a, V.boundary_integrated_fluxes[i]);
                 }
             }
-            boundary_integrated_normal_poynting_vectors.sadd(s, a, 
-                    V.boundary_integrated_normal_poynting_vectors);
+            if (boundary_integrated_normal_poynting_vectors.size() != 0) {
+                boundary_integrated_normal_poynting_vectors.sadd(s, a, 
+                        V.boundary_integrated_normal_poynting_vectors);
+            }
         }
 
         Tensor<1, 5, double> FiveMBoundaryIntegratedFluxesVector::at_boundary(unsigned int boundary_id) {
@@ -39,7 +41,9 @@ namespace warpii {
         }
 
         void FiveMBoundaryIntegratedFluxesVector::sadd(const double s, const double a, const FiveMBoundaryIntegratedFluxesVector& V) {
-            data.sadd(s, a, V.data);
+            if (data.size() != 0) {
+                data.sadd(s, a, V.data);
+            }
         }
 
         void FiveMBoundaryIntegratedFluxesVector::reinit(unsigned int n_boundaries, unsigned int) {

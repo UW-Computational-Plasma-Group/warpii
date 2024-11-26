@@ -247,8 +247,10 @@ TimestepResult FluidFluxESDGSEMOperator<dim>::perform_forward_euler_step(
                     dst.boundary_integrated_fluxes.at(i).sadd(
                         1.0, c * dt, dudt_register.boundary_integrated_fluxes.at(i));
                 }
-                dst.boundary_integrated_normal_poynting_vectors.sadd(
-                        b, a, u.boundary_integrated_normal_poynting_vectors);
+                if (dst.boundary_integrated_normal_poynting_vectors.size() != 0) {
+                    dst.boundary_integrated_normal_poynting_vectors.sadd(
+                            b, a, u.boundary_integrated_normal_poynting_vectors);
+                }
             }
 
             if (check_if_solution_is_positive(discretization->get_matrix_free(), dst.mesh_sol)) {
