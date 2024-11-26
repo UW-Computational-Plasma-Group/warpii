@@ -165,10 +165,12 @@ TimestepResult MaxwellFluxDGOperator<dim, SolutionVec>::perform_forward_euler_st
                         b * dst_i + a * u_i + c * dt_request.requested_dt * dudt_i;
                 }
             });
-        dst.boundary_integrated_normal_poynting_vectors.sadd(b, a,
-                u.boundary_integrated_normal_poynting_vectors);
-        dst.boundary_integrated_normal_poynting_vectors.sadd(1.0, c * dt_request.requested_dt,
-            dudt_register.boundary_integrated_normal_poynting_vectors);
+        if (dst.boundary_integrated_normal_poynting_vectors.size() != 0) {
+            dst.boundary_integrated_normal_poynting_vectors.sadd(b, a,
+                    u.boundary_integrated_normal_poynting_vectors);
+            dst.boundary_integrated_normal_poynting_vectors.sadd(1.0, c * dt_request.requested_dt,
+                dudt_register.boundary_integrated_normal_poynting_vectors);
+        }
     }
 
     return TimestepResult::success(dt_request);
